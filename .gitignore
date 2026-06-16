@@ -30,3 +30,4 @@ certs/*
 geoip/*.mmdb
 browsers/
 docs/*
+deploy/*

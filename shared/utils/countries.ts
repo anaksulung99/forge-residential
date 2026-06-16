@@ -1929,9 +1929,10 @@ export const CountryList: CountryItem[] = [
   },
 ];
 
-export function mapCountryCodeFromName(name: string): string {
+export function mapCountryCodeFromName(name?: string | null): string | null {
+  if (!name) return null;
   return (
     CountryList.find((c) => c.name.toLowerCase() === name.toLowerCase())
-      ?.code || ""
+      ?.code || null
   );
 }

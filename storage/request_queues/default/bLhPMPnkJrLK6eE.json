@@ -1,0 +1,9 @@
+{
+	"id": "bLhPMPnkJrLK6eE",
+	"json": "{\"id\":\"bLhPMPnkJrLK6eE\",\"url\":\"https://openproxylist.com/proxy/\",\"loadedUrl\":\"https://openproxylist.com/proxy/\",\"uniqueKey\":\"https://openproxylist.com/proxy\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":2,\"errorMessages\":[\"page.waitForSelector: Timeout 30000ms exceeded.\\nCall log:\\n\\u001b[2m  - waiting for locator('table tbody tr') to be visible\\u001b[22m\\n\\n    at PlaywrightCrawler.requestHandler (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\server\\\\services\\\\scraper-tool-service.ts:598:22)\\n    at async wrap (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\node_modules\\\\.pnpm\\\\@apify+timeout@0.3.5\\\\node_modules\\\\@apify\\\\src\\\\index.ts:78:27)\",\"page.waitForSelector: Timeout 30000ms exceeded.\\nCall log:\\n\\u001b[2m  - waiting for locator('table tbody tr') to be visible\\u001b[22m\\n\\n    at PlaywrightCrawler.requestHandler (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\server\\\\services\\\\scraper-tool-service.ts:598:22)\\n    at async wrap (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\node_modules\\\\.pnpm\\\\@apify+timeout@0.3.5\\\\node_modules\\\\@apify\\\\src\\\\index.ts:78:27)\",\"page.waitForSelector: Timeout 30000ms exceeded.\\nCall log:\\n\\u001b[2m  - waiting for locator('table tbody tr') to be visible\\u001b[22m\\n\\n    at PlaywrightCrawler.requestHandler (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\server\\\\services\\\\scraper-tool-service.ts:598:22)\\n    at async wrap (D:\\\\laragon\\\\www\\\\tools\\\\residential-proxy\\\\node_modules\\\\.pnpm\\\\@apify+timeout@0.3.5\\\\node_modules\\\\@apify\\\\src\\\\index.ts:78:27)\"],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":5}},\"handledAt\":\"2026-06-16T17:11:30.152Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 2,
+	"uniqueKey": "https://openproxylist.com/proxy",
+	"url": "https://openproxylist.com/proxy/"
+}

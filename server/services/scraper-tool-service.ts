@@ -43,6 +43,18 @@ export class ProxyScraperToolService {
       case "hide-mn":
         result = await this.scrapeHideMn(url);
         break;
+      case "openproxylist":
+        result = await this.scrapeOpenProxyList(url);
+        break;
+      case "proxydb":
+        result = await this.scrapeProxyDb(url);
+        break;
+      case "proxynova":
+        result = await this.scrapeProxyNova(url);
+        break;
+      case "freeproxy-world":
+        result = await this.scrapeFreeproxyWorld(url);
+        break;
       default:
         result = await this.scrapeProxyscrape(url);
         break;
@@ -232,6 +244,48 @@ export class ProxyScraperToolService {
     });
 
     return out;
+  }
+
+  private async scrapeSpysOneWithPagination(
+    url: string,
+  ): Promise<ScrapedProxy[]> {
+    try {
+      const out: ScrapedProxy[] = [];
+      const seen = new Set<string>();
+      const pageUrl = new URL(url);
+      const maxPagesEnv = Number(process.env.MAX_PAGES_PAGINATION_SCRAPE || 0);
+      let totalPages = 1;
+
+      for (let page = 1; page <= totalPages; page++) {
+        const $ = await this.fetchProxyPage(pageUrl);
+        if (page === 1) {
+          totalPages = this.getSpyOneTotalPages($);
+          if (maxPagesEnv > 0) {
+            totalPages = Math.min(totalPages, maxPagesEnv);
+          }
+        }
+
+        let pageCount = 0;
+
+        $("table tbody tr").each((_, tr) => {
+          const proxy = this.parseFreeproxyWorldRow($, tr);
+          if (!proxy) return;
+
+          const key = `${proxy.host}:${proxy.port}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          pageCount++;
+          out.push(proxy);
+        });
+
+        if (pageCount === 0) break;
+      }
+
+      return out;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
   }
 
   private async scrapeProxyscrape(url: string): Promise<ScrapedProxy[]> {
@@ -533,6 +587,360 @@ export class ProxyScraperToolService {
     }
   }
 
+  private async scrapeOpenProxyList(url: string): Promise<ScrapedProxy[]> {
+    const out: ScrapedProxy[] = [];
+
+    try {
+      const executablePath = this.getPlaywrightBrowserPath();
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const self = this;
+      const crawler = new PlaywrightCrawler({
+        retryOnBlocked: false,
+        maxRequestsPerCrawl: 1,
+        launchContext: {
+          launchOptions: {
+            headless: true,
+            ...(executablePath ? { executablePath } : {}),
+            args: [
+              "--disable-blink-features=AutomationControlled",
+              "--disable-dev-shm-usage",
+              "--no-sandbox",
+            ],
+          },
+        },
+        browserPoolOptions: {
+          useFingerprints: true,
+          fingerprintOptions: {
+            fingerprintGeneratorOptions: {
+              browsers: ["chrome"],
+              operatingSystems: ["windows"],
+            },
+          },
+        },
+
+        maxRequestRetries: 2,
+
+        preNavigationHooks: [
+          async ({ page }, gotoOptions) => {
+            await page.setExtraHTTPHeaders({
+              accept:
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+              "accept-language": "en-US,en;q=0.9",
+              "cache-control": "no-cache",
+              pragma: "no-cache",
+              referer: "https://hide.mn/en/proxy-list/",
+            });
+
+            gotoOptions.waitUntil = "domcontentloaded";
+          },
+        ],
+
+        async requestHandler({ page, response, handleCloudflareChallenge }) {
+          if (typeof handleCloudflareChallenge === "function") {
+            await handleCloudflareChallenge({ sleepSecs: 5 });
+          }
+
+          if (response?.status() === 403) {
+            throw new Error(
+              "Hide.mn returned HTTP 403. The site blocked this crawler session before the proxy table loaded.",
+            );
+          }
+
+          await page.waitForSelector("table tbody tr", { timeout: 30_000 });
+
+          const rows = await page.$$eval("table tbody tr", (trs) =>
+            trs.map((tr) => {
+              const tds = Array.from(tr.querySelectorAll("td"));
+
+              // <td data-label="Type" class="fw-bold small"><a href="/proxy/type/socks4/">SOCKS4</a></td>
+              const protocol =
+                tds[3]?.querySelector("a")?.textContent?.trim() ?? "";
+
+              // <td data-label="IP Address"><a href="/proxy/18289534">37.18.73.60</a></td>
+              const host =
+                tds[1]?.querySelector("a")?.textContent?.trim() ?? "";
+
+              return {
+                host,
+                port: tds[2]?.textContent?.trim() ?? "",
+                country: tds[4]?.textContent?.trim() ?? null,
+                protocol,
+                anonymity: tds[7]?.textContent?.trim() ?? "",
+              };
+            }),
+          );
+
+          for (const row of rows) {
+            const host = String(row.host).trim();
+            const port = Number(row.port);
+            if (!self.IPV4_RE.test(host) || !port || port > 65535) continue;
+
+            out.push({
+              host,
+              port,
+              protocol: self.mapProtocol(row.protocol),
+              country: row.country,
+              anonymity: self.mapHideMnAnonymity(row.anonymity),
+            });
+          }
+        },
+
+        async failedRequestHandler({ request, log }) {
+          log.error(
+            `Gagal memproses ${request.url} setelah beberapa kali percobaan.`,
+          );
+        },
+      });
+      await crawler.run([url]);
+      return out;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+  private async scrapeProxyDb(url: string): Promise<ScrapedProxy[]> {
+    const out: ScrapedProxy[] = [];
+    const seen = new Set<string>();
+    const pageUrl = new URL(url);
+    const visitedOffsets = new Set<number>();
+    const maxPagesEnv = Number(process.env.PROXYDB_MAX_PAGES || 0);
+    let currentOffset = Number(pageUrl.searchParams.get("offset") || 0);
+    let pageCount = 0;
+
+    while (!visitedOffsets.has(currentOffset)) {
+      visitedOffsets.add(currentOffset);
+      pageCount++;
+      pageUrl.searchParams.set("offset", String(currentOffset));
+
+      const $ = await this.fetchProxyDbPage(pageUrl);
+      let parsedInPage = 0;
+
+      $("table tbody tr").each((_, tr) => {
+        const proxy = this.parseProxyDbRow($, tr);
+        if (!proxy) return;
+
+        const key = `${proxy.host}:${proxy.port}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        parsedInPage++;
+        out.push(proxy);
+      });
+
+      if (parsedInPage === 0) break;
+      if (maxPagesEnv > 0 && pageCount >= maxPagesEnv) break;
+
+      const nextOffset = this.getProxyDbNextOffset($);
+      if (nextOffset == null || nextOffset <= currentOffset) break;
+
+      currentOffset = nextOffset;
+    }
+
+    return out;
+  }
+
+  private async fetchProxyDbPage(url: URL) {
+    const res = await fetch(url.toString(), {
+      headers: {
+        "user-agent": this.UA,
+        accept: "text/html",
+        Referer: url.origin,
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return cheerio.load(await res.text());
+  }
+
+  private getProxyDbNextOffset($: cheerio.CheerioAPI) {
+    let nextOffset: number | null = null;
+
+    $("a[href*='offset=']").each((_, link) => {
+      const text = $(link).text().replace(/\s+/g, " ").trim().toLowerCase();
+      if (!text.includes("next")) return;
+
+      const href = $(link).attr("href");
+      if (!href) return;
+
+      const offset = Number(
+        new URL(href, "https://proxydb.net/").searchParams.get("offset"),
+      );
+      if (Number.isFinite(offset)) nextOffset = offset;
+    });
+
+    return nextOffset;
+  }
+
+  private parseProxyDbRow($: cheerio.CheerioAPI, tr: any): ScrapedProxy | null {
+    const tds = $(tr).find("td");
+    if (tds.length < 4) return null;
+
+    const host = $(tds[0]).find("a").text().trim();
+    const port = parseInt($(tds[1]).find("a").text().trim(), 10);
+    if (!this.IPV4_RE.test(host) || !port || port > 65535) return null;
+
+    const country = $(tds[3]).find("abbr").text().trim().toUpperCase() || null;
+
+    return {
+      host,
+      port,
+      protocol: this.mapProtocol($(tds[3]).text()),
+      country,
+      anonymity: this.mapAnonymity($(tds[2]).text()),
+    };
+  }
+
+  private async scrapeProxyNova(url: string): Promise<ScrapedProxy[]> {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "user-agent": this.UA,
+          accept: "text/html",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Cache-Control": "no-cache",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      const $ = cheerio.load(html);
+
+      const rows = $("tr[data-proxy-id]");
+      if (rows.length === 0) {
+        const fallbackRows = $("table tbody tr");
+        return this.parseRowsProxyNova(fallbackRows, $);
+      }
+
+      return this.parseRowsProxyNova(rows, $);
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+  private async scrapeFreeproxyWorld(url: string): Promise<ScrapedProxy[]> {
+    try {
+      const out: ScrapedProxy[] = [];
+      const seen = new Set<string>();
+      const pageUrl = new URL(url);
+      const maxPagesEnv = Number(process.env.MAX_PAGES_PAGINATION_SCRAPE || 0);
+      let totalPages = 1;
+
+      for (let page = 1; page <= totalPages; page++) {
+        pageUrl.searchParams.set("page", String(page));
+
+        const $ = await this.fetchProxyPage(pageUrl);
+        if (page === 1) {
+          totalPages = this.getFreeproxyWorldTotalPages($);
+          if (maxPagesEnv > 0) {
+            totalPages = Math.min(totalPages, maxPagesEnv);
+          }
+        }
+
+        let pageCount = 0;
+
+        $("table tbody tr").each((_, tr) => {
+          const proxy = this.parseFreeproxyWorldRow($, tr);
+          if (!proxy) return;
+
+          const key = `${proxy.host}:${proxy.port}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          pageCount++;
+          out.push(proxy);
+        });
+
+        if (pageCount === 0) break;
+      }
+
+      return out;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  }
+
+  private getFreeproxyWorldTotalPages($: cheerio.CheerioAPI) {
+    let totalPages = 1;
+
+    $(".pagination a[href*='page=']").each((_, link) => {
+      const href = $(link).attr("href");
+      if (!href) return;
+
+      const parsed = new URL(href, "https://www.freeproxy.world/");
+      const page = Number(parsed.searchParams.get("page"));
+      if (Number.isFinite(page) && page > totalPages) {
+        totalPages = page;
+      }
+    });
+
+    return totalPages;
+  }
+
+  private parseFreeproxyWorldRow(
+    $: cheerio.CheerioAPI,
+    tr: any,
+  ): ScrapedProxy | null {
+    const tds = $(tr).find("td");
+    if (tds.length < 4) return null;
+
+    const host = $(tds[0]).text().trim();
+    const port = parseInt($(tds[1]).text().trim(), 10);
+    if (!this.IPV4_RE.test(host) || !port || port > 65535) return null;
+
+    const countryHref = $(tds[2]).find("a[href*='country=']").attr("href");
+    const country = countryHref
+      ? new URL(countryHref, "https://www.freeproxy.world/").searchParams
+          .get("country")
+          ?.toUpperCase() || null
+      : null;
+
+    return {
+      host,
+      port,
+      protocol: this.mapProtocol($(tds[5]).text()),
+      country,
+      anonymity: this.mapFreeproxyWorldAnonymity(
+        $(tds[6]).find("a").text().trim(),
+      ),
+    };
+  }
+
+  private getSpyOneTotalPages($: cheerio.CheerioAPI) {
+    let totalPages = 1;
+
+    $("table tbody tr").each((_, tr) => {
+      const tds = $(tr).find("td");
+      if (tds.length < 4) return;
+
+      const seletcs = $(tds[3]).find("font").find("select");
+      if (seletcs.length === 0) return;
+      totalPages = seletcs.length;
+    });
+
+    return totalPages;
+  }
+
+  private async fetchProxyPage(url: URL) {
+    const referrer = url.origin;
+    const res = await fetch(url.toString(), {
+      headers: {
+        "user-agent": this.UA,
+        accept: "text/html",
+        Referer: referrer,
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return cheerio.load(await res.text());
+  }
+
   private mapAnonymity(s: string): ScrapedAnonymity {
     const v = s.toLowerCase();
     if (v.includes("elite")) return "elite";
@@ -555,6 +963,14 @@ export class ProxyScraperToolService {
     if (v.includes("average") || v.includes("anonymous")) return "anonymous";
     if (v.includes("low") || v.includes("transparent")) return "transparent";
     return "unknown";
+  }
+
+  private mapFreeproxyWorldAnonymity(s: string): ScrapedAnonymity {
+    const v = s.toLowerCase();
+    if (v.includes("high") || v.includes("elite")) return "elite";
+    if (v.includes("anonymous")) return "anonymous";
+    if (v === "no" || v.includes("transparent")) return "transparent";
+    return this.mapAnonymity(s);
   }
 
   private mapProtocol(s: string): ParsedProtocol {
@@ -617,6 +1033,72 @@ export class ProxyScraperToolService {
     return port;
   }
 
+  private parseRowsProxyNova(
+    rows: cheerio.Cheerio<any>,
+    $: cheerio.CheerioAPI,
+  ): ScrapedProxy[] {
+    const out: ScrapedProxy[] = [];
+    let parsedCount = 0;
+    let skippedCount = 0;
+
+    rows.each((index, tr) => {
+      const tds = $(tr).find("td");
+
+      if (index < 3) {
+        console.log(`[ProxyNova] Row ${index} has ${tds.length} cells`);
+      }
+
+      if (tds.length < 7) {
+        skippedCount++;
+        return;
+      }
+
+      const host = this.extractHostProxyNova($(tds[0]));
+      if (!host || !this.IPV4_RE.test(host)) {
+        skippedCount++;
+        return;
+      }
+
+      const portText = $(tds[1]).text().trim();
+      const port = parseInt(portText, 10);
+      if (isNaN(port) || port < 1 || port > 65535) {
+        skippedCount++;
+        return;
+      }
+
+      const country = $(tds[5]).find("a").text().trim();
+
+      const anonymityText = $(tds[6]).find("span").text().trim().toLowerCase();
+      const anonymity = this.mapAnonymity(anonymityText);
+
+      const protocol = this.inferProtocol(port, $(tds[3]).text());
+
+      if (out.length < 3) {
+        console.log(`[ProxyNova] Sample ${out.length + 1}:`, {
+          host,
+          port,
+          country,
+          anonymity,
+          protocol,
+          raw: $(tds[0]).html()?.substring(0, 100),
+        });
+      }
+
+      out.push({
+        host,
+        port,
+        protocol,
+        country: mapCountryCodeFromName(country),
+        anonymity,
+      });
+
+      parsedCount++;
+    });
+
+    console.log(`[ProxyNova] Parsed: ${parsedCount}, Skipped: ${skippedCount}`);
+    return out;
+  }
+
   private getPlaywrightBrowserPath() {
     ensurePlaywrightBrowsersPath();
 
@@ -673,6 +1155,47 @@ export class ProxyScraperToolService {
 
     const iso = raw.match(/\b[A-Z]{2}\b/)?.[0];
     if (iso) return iso;
+    return null;
+  }
+
+  private inferProtocol(port: number, typeText: string): ParsedProtocol {
+    const typeLower = typeText.toLowerCase();
+
+    if (port === 1080 || port === 1081 || port === 1082) {
+      return "socks5";
+    }
+
+    if (typeLower.includes("socks")) return "socks5";
+    if (typeLower.includes("https") || typeLower.includes("ssl"))
+      return "https";
+
+    if (port === 443 || port === 8443) return "https";
+    if (port === 80 || port === 8080 || port === 3128) return "http";
+
+    return "http";
+  }
+
+  private extractHostProxyNova(td: cheerio.Cheerio<any>): string | null {
+    const text = td.text().trim();
+
+    const html = td.html() || "";
+    const scriptMatch = html.match(
+      /<script>document\.write\(([^)]+)\)<\/script>/,
+    );
+
+    if (scriptMatch) {
+      const cleanHtml = html.replace(/<script>.*?<\/script>/, "").trim();
+      const ipMatch = cleanHtml.match(/(\d{1,3}\.){3}\d{1,3}/);
+      if (ipMatch) {
+        return ipMatch[0];
+      }
+    }
+
+    const ipMatch = text.match(/(\d{1,3}\.){3}\d{1,3}/);
+    if (ipMatch) {
+      return ipMatch[0];
+    }
+
     return null;
   }
 }

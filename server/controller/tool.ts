@@ -35,6 +35,12 @@ export const scrapeHandler = async (event: H3Event) => {
     if (body.data.country) {
       filtered = filtered.filter((p) => p.country === body.data.country);
     }
+    if (body.data.protocol) {
+      filtered = filtered.filter((p) => p.protocol === body.data.protocol);
+    }
+    if (body.data.anonymity) {
+      filtered = filtered.filter((p) => p.anonymity === body.data.anonymity);
+    }
 
     return {
       success: true,

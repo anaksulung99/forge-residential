@@ -7,6 +7,7 @@ import type {
 import FlagIcon, { type CountryCode } from "vue3-flag-icons";
 
 const { proxies, isLoading, scrape } = useTools();
+const { importResult, loading, importProxy } = useProxy();
 const toast = useAppToast();
 
 const state = reactive({
@@ -18,6 +19,12 @@ const state = reactive({
 
 const slectedCountries = ref<{ label: string; value: string }>();
 const errorMessage = ref<FormErrorWithId[]>();
+const importOpen = ref(false);
+const importForm = reactive({
+  raw: "",
+  defaultProtocol: "http" as "http" | "https" | "socks5",
+  sourceLabel: "",
+});
 
 const onSubmit = async (event: FormSubmitEvent<ToolsScrapeOutput>) => {
   proxies.value = [];
@@ -69,6 +76,33 @@ function resetForm() {
   state.anonymity = "all";
   slectedCountries.value = undefined;
   errorMessage.value = [];
+}
+
+function openImport() {
+  importForm.raw = proxies.value.map((p) => `${p.host}:${p.port}`).join("\n");
+  importForm.sourceLabel = state.sources;
+  importForm.defaultProtocol =
+    state.protocol !== "all"
+      ? (state.protocol as "http" | "https" | "socks5")
+      : "http";
+  importResult.value = null;
+  importOpen.value = true;
+}
+
+async function submitImport() {
+  if (importForm.raw.trim().length < 3) {
+    toast.warning("Tempel dulu daftar proxy-nya.");
+    return;
+  }
+  await importProxy({
+    raw: importForm.raw,
+    defaultProtocol: importForm.defaultProtocol,
+    sourceLabel: importForm.sourceLabel || undefined,
+  });
+  importOpen.value = false;
+  setTimeout(async () => {
+    await navigateTo("/app/proxies");
+  }, 1000);
 }
 
 const sourcesOptions = [
@@ -147,6 +181,30 @@ const anonymityOptions = [
   { label: "Anonymous", value: "anonymous" },
   { label: "Elite", value: "elite" },
 ];
+
+onBeforeRouteLeave((to, from) => {
+  if (isLoading.value) {
+    const confirmLeave = window.confirm(
+      "Proses sedang berjalan. Apakah Anda yakin ingin keluar?",
+    );
+    if (!confirmLeave) {
+      return false; // Membatalkan perpindahan rute
+    }
+  }
+});
+
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  if (isLoading.value) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+};
+onMounted(() => {
+  window.addEventListener("beforeunload", handleBeforeUnload);
+});
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+});
 </script>
 
 <template>
@@ -246,7 +304,9 @@ const anonymityOptions = [
     <UCard v-if="proxies?.length > 0">
       <template #header>
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-semibold">Scraped Proxies</h3>
+          <h3 class="text-lg font-semibold">
+            Scraped Proxies ({{ proxies?.length }})
+          </h3>
           <div class="flex gap-2">
             <UButton
               size="sm"
@@ -255,6 +315,15 @@ const anonymityOptions = [
               @click="copyProxies"
             >
               Copy
+            </UButton>
+            <UButton
+              size="sm"
+              color="primary"
+              class="text-white"
+              icon="i-heroicons-arrow-up-tray"
+              @click="openImport"
+            >
+              Import
             </UButton>
             <UButton
               size="sm"
@@ -292,5 +361,137 @@ const anonymityOptions = [
         </table>
       </div>
     </UCard>
+
+    <UModal v-model:open="importOpen" title="Import Proxy">
+      <template #body>
+        <div class="space-y-4">
+          <div class="space-y-4">
+            <div>
+              <label class="mb-1 block text-sm font-medium">
+                Daftar proxy
+              </label>
+              <UTextarea
+                v-model="importForm.raw"
+                :rows="8"
+                placeholder="ip:port&#10;ip:port:user:pass&#10;user:pass@ip:port&#10;socks5://ip:port"
+                class="w-full rounded-md border border-neutral-300 bg-transparent p-3 font-mono text-xs dark:border-neutral-700"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-sm font-medium">
+                  Protokol default
+                </label>
+                <USelect
+                  v-model="importForm.defaultProtocol"
+                  :items="[
+                    {
+                      label: 'HTTP',
+                      value: 'http',
+                    },
+                    {
+                      label: 'HTTPS',
+                      value: 'https',
+                    },
+                    {
+                      label: 'SOCKS5',
+                      value: 'socks5',
+                    },
+                  ]"
+                  class="w-full"
+                />
+                <p class="mt-1 text-xs text-muted">
+                  Dipakai bila baris tidak menyebut protokol.
+                </p>
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium">
+                  Label sumber (opsional)
+                </label>
+                <UInput
+                  v-model="importForm.sourceLabel"
+                  placeholder="mis. Vendor A"
+                />
+              </div>
+            </div>
+
+            <!-- Hasil import -->
+            <div
+              v-if="importResult"
+              class="rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900/50"
+            >
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                <span class="text-muted">Ditemukan valid</span>
+                <span class="font-medium">{{ importResult.found }}</span>
+                <span class="text-muted">Berhasil diimpor</span>
+                <span class="font-medium text-emerald-400">
+                  {{ importResult.imported }}
+                </span>
+                <span class="text-muted">Duplikat (sudah ada)</span>
+                <span class="font-medium">{{ importResult.dbDuplicates }}</span>
+                <span class="text-muted">Duplikat dalam input</span>
+                <span class="font-medium">
+                  {{ importResult.batchDuplicates }}
+                </span>
+                <span class="text-muted">Baris tidak valid</span>
+                <span class="font-medium text-amber-400">
+                  {{ importResult.invalid.length }}
+                </span>
+              </div>
+              <details v-if="importResult.invalid.length" class="mt-2">
+                <summary class="cursor-pointer text-xs text-amber-400">
+                  Lihat baris bermasalah
+                </summary>
+                <ul class="mt-1 max-h-32 overflow-y-auto text-xs">
+                  <li
+                    v-for="(inv, i) in importResult.invalid"
+                    :key="i"
+                    class="font-mono text-muted"
+                  >
+                    {{ inv.raw }} — {{ inv.reason }}
+                  </li>
+                </ul>
+              </details>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-2">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="md"
+              :disabled="loading"
+              @click="importOpen = false"
+            >
+              Tutup
+            </UButton>
+            <UButton
+              color="primary"
+              size="md"
+              class="text-white"
+              :disabled="loading"
+              :loading="loading"
+              @click="submitImport"
+            >
+              Import
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model="isLoading" prevent-close :ui="{ wrapper: 'sm:max-w-xs' }">
+      <div class="p-6 flex flex-col items-center justify-center space-y-4">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"
+        ></div>
+        <p
+          class="text-sm font-medium text-neutral-600 dark:text-neutral-400 animate-pulse"
+        >
+          Sedang memproses data...
+        </p>
+      </div>
+    </UModal>
   </div>
 </template>

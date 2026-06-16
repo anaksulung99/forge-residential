@@ -2,35 +2,35 @@
   "requestsFinished": 0,
   "requestsFailed": 1,
   "requestsRetries": 1,
-  "requestsFailedPerMinute": 15,
+  "requestsFailedPerMinute": 0,
   "requestsFinishedPerMinute": 0,
   "requestMinDurationMillis": null,
   "requestMaxDurationMillis": 0,
-  "requestTotalFailedDurationMillis": 833,
+  "requestTotalFailedDurationMillis": 30685,
   "requestTotalFinishedDurationMillis": 0,
-  "crawlerStartedAt": "2026-06-16T15:14:16.096Z",
-  "crawlerFinishedAt": "2026-06-16T15:14:19.867Z",
-  "statsPersistedAt": "2026-06-16T15:14:19.867Z",
-  "crawlerRuntimeMillis": 3992,
-  "crawlerLastStartTimestamp": 1781622855875,
+  "crawlerStartedAt": "2026-06-16T17:09:53.908Z",
+  "crawlerFinishedAt": "2026-06-16T17:11:30.451Z",
+  "statsPersistedAt": "2026-06-16T17:11:30.451Z",
+  "crawlerRuntimeMillis": 96746,
+  "crawlerLastStartTimestamp": 1781629793705,
   "requestRetryHistogram": [
     null,
     null,
     1
   ],
   "statsId": 0,
-  "requestAvgFailedDurationMillis": 833,
+  "requestAvgFailedDurationMillis": 30685,
   "requestAvgFinishedDurationMillis": null,
-  "requestTotalDurationMillis": 833,
+  "requestTotalDurationMillis": 30685,
   "requestsTotal": 1,
   "requestsWithStatusCode": {
-    "403": 3
+    "200": 3
   },
   "errors": {
-    "D:\\laragon\\www\\tools\\residential-proxy\\node_modules\\.pnpm\\@crawlee+basic@3.17.0\\node_modules\\@crawlee\\basic\\internals\\basic-crawler.js:910:19": {
+    "D:\\laragon\\www\\tools\\residential-proxy\\server\\services\\scraper-tool-service.ts:598:22": {
       "missing error code": {
-        "Error": {
-          "Request blocked - received 403 status code.": {
+        "TimeoutError": {
+          "page.waitForSelector: Timeout 30000ms exceeded.": {
             "count": 1
           }
         }
@@ -38,10 +38,10 @@
     }
   },
   "retryErrors": {
-    "D:\\laragon\\www\\tools\\residential-proxy\\node_modules\\.pnpm\\@crawlee+basic@3.17.0\\node_modules\\@crawlee\\basic\\internals\\basic-crawler.js:910:19": {
+    "D:\\laragon\\www\\tools\\residential-proxy\\server\\services\\scraper-tool-service.ts:598:22": {
       "missing error code": {
-        "Error": {
-          "Request blocked - received 403 status code.": {
+        "TimeoutError": {
+          "page.waitForSelector: Timeout 30000ms exceeded.": {
             "count": 2
           }
         }
