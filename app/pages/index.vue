@@ -1,5 +1,8 @@
 <script setup lang="ts">
-definePageMeta({ layout: "default" });
+definePageMeta({
+  middleware: "home",
+  layout: "default",
+});
 
 const { t, locale, messages } = useI18n();
 const { user } = useUserSession();
@@ -173,9 +176,6 @@ const steps = computed(() => [
 ]);
 
 onMounted(() => {
-  // console.log(localeMessages.value.en.pricing?.free.features[0].body.static);
-  // console.log(finalPlans.value);
-  // console.log(plans.value[0]?.features);
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
