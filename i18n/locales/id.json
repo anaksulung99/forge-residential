@@ -1,0 +1,651 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "features": "Fitur",
+    "pricing": "Harga",
+    "docs": "Dokumentasi",
+    "faq": "FAQ",
+    "contact": "Kontak",
+    "about": "Tentang"
+  },
+  "auth": {
+    "login": "Masuk",
+    "register": "Daftar",
+    "logout": "Keluar",
+    "dashboard": "Dasbor"
+  },
+  "theme": {
+    "light": "Terang",
+    "dark": "Gelap",
+    "system": "Sistem"
+  },
+  "hero": {
+    "badge": "🚀 Platform Pertukaran Traffic Bertenaga AI",
+    "title": "Dapatkan Traffic Berkualitas Tinggi dengan",
+    "titleHighlight": "Routing Cerdas",
+    "subtitle": "Maksimalkan traffic website Anda melalui jaringan pertukaran traffic yang dioptimalkan AI. Analitik real-time, manajemen kampanye yang cerdas, dan integrasi yang mulus.",
+    "cta": {
+      "startFree": "Mulai Uji Coba Gratis",
+      "watchDemo": "Tonton Demo",
+      "viewDocs": "Lihat Dokumentasi"
+    },
+    "stats": {
+      "activeUsers": "Pengguna Aktif",
+      "campaigns": "Kampanye",
+      "dailyImpressions": "Impresi Harian",
+      "countries": "Negara"
+    }
+  },
+  "features": {
+    "title": "Semua yang Anda Butuhkan untuk Meningkatkan Traffic",
+    "subtitle": "Platform lengkap untuk mengelola, mengoptimalkan, dan menganalisis kampanye pertukaran traffic dengan presisi bertenaga AI.",
+    "items": {
+      "aiRouting": {
+        "title": "Routing Bertenaga AI",
+        "description": "Mesin routing cerdas kami menganalisis perilaku pengguna dan mengoptimalkan distribusi traffic secara real-time untuk engagement maksimum."
+      },
+      "realTimeAnalytics": {
+        "title": "Analitik Real-Time",
+        "description": "Lacak setiap klik, impressi, dan konversi dengan dasbor langsung. Buat keputusan berbasis data secara instan."
+      },
+      "smartCampaigns": {
+        "title": "Manajemen Kampanye Cerdas",
+        "description": "Buat dan kelola berbagai tipe kampanye — Classic, Custom Events, CTA, dan Browse dengan mudah."
+      },
+      "workerSystem": {
+        "title": "Sistem Worker Terdistribusi",
+        "description": "Skalakan operasi Anda dengan beberapa instance worker yang dapat berjalan secara paralel di berbagai server."
+      },
+      "proxyIntegration": {
+        "title": "Manajemen Proxy",
+        "description": "Dukungan proxy terintegrasi dengan penargetan tingkat negara untuk optimalisasi kampanye geografis yang tepat."
+      },
+      "integrationHub": {
+        "title": "Hub Integrasi",
+        "description": "Hubungkan dengan alat favorit Anda melalui integrasi webhook. Kirim event ke Slack, Discord, dan endpoint kustom."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Cara Kerja",
+    "subtitle": "Mulai dalam hitungan menit, skalakan tanpa batas.",
+    "steps": {
+      "step1": {
+        "title": "Buat Kampanye Anda",
+        "description": "Siapkan kampanye Anda dalam detik. Pilih audiens target, atur durasi kunjungan, dan tentukan tujuan Anda."
+      },
+      "step2": {
+        "title": "Konfigurasi Worker",
+        "description": "Deploy browser worker di server Anda. Setiap worker dapat menjalankan ratusan sesi secara bersamaan."
+      },
+      "step3": {
+        "title": "Luncurkan & Optimalkan",
+        "description": "Pantau pertumbuhan traffic Anda dengan pemantauan real-time. Biarkan AI mengoptimalkan routing untuk hasil maksimum."
+      }
+    }
+  },
+  "pricing": {
+    "title": "Harga Sederhana & Transparan",
+    "subtitle": "Mulai gratis, skalakan seiring pertumbuhan. Tanpa biaya tersembunyi.",
+    "free": {
+      "id": "free",
+      "name": "Gratis",
+      "description": "Sempurna untuk pengujian dan kampanye kecil.",
+      "price": "Rp 0",
+      "period": "selamanya",
+      "features": [
+        "100 kredit bulanan",
+        "2 kampanye aktif",
+        "Proxy dasar",
+        "Dukungan email"
+      ],
+      "cta": "Mulai Sekarang"
+    },
+    "starter": {
+      "id": "starter",
+      "name": "Starter",
+      "description": "Sangat cocok untuk usaha kecil dan agensi.",
+      "price": "Rp 99K",
+      "period": "month",
+      "features": [
+        "10K kredit bulanan",
+        "10 kampanye aktif",
+        "Proxy regional",
+        "Prioritas dukungan"
+      ],
+      "cta": "Mulai Sekarang"
+    },
+    "pro": {
+      "id": "pro",
+      "name": "Profesional",
+      "description": "Untuk bisnis dan agensi yang berkembang.",
+      "price": "Rp 299K",
+      "period": "month",
+      "features": [
+        "100K credit per bulan",
+        "50 Kampanye aktif",
+        "Routing bertenaga AI",
+        "Mobile + Residential",
+        "Multi GEO",
+        "24/7 support"
+      ],
+      "cta": "Mulai Sekarang",
+      "popular": true
+    },
+    "enterprise": {
+      "id": "enterprise",
+      "name": "Enterprise",
+      "description": "Untuk operasi berskala besar.",
+      "price": "Kustom",
+      "period": "",
+      "features": [
+        "Kredit khusus/bulan",
+        "Kampanye tak terbatas",
+        "Dedicated proxy",
+        "Routing bertenaga AI",
+        "SLA + API",
+        "Dukungan 24/7",
+        "Integrasi kustom"
+      ],
+      "cta": "Hubungi Penjualan"
+    }
+  },
+  "cta": {
+    "title": "Siap Meningkatkan Traffic Anda?",
+    "subtitle": "Bergabunglah dengan ribuan marketer dan developer yang menggunakan Smart Boost Labs untuk mendapatkan traffic berkualitas.",
+    "primary": "Mulai Uji Coba Gratis",
+    "secondary": "Jadwalkan Demo"
+  },
+  "footer": {
+    "tagline": "Platform Pertukaran Traffic Bertenaga AI",
+    "product": {
+      "title": "Produk",
+      "features": "Fitur",
+      "pricing": "Harga",
+      "changelog": "Changelog",
+      "roadmap": "Roadmap"
+    },
+    "resources": {
+      "title": "Sumber Daya",
+      "docs": "Dokumentasi",
+      "api": "Referensi API",
+      "tutorials": "Tutorial",
+      "blog": "Blog"
+    },
+    "company": {
+      "title": "Perusahaan",
+      "about": "Tentang",
+      "contact": "Kontak",
+      "careers": "Karir",
+      "press": "Press"
+    },
+    "legal": {
+      "title": "Legal",
+      "terms": "Ketentuan Layanan",
+      "privacy": "Kebijakan Privasi",
+      "cookies": "Kebijakan Cookie",
+      "faq": "FAQ"
+    },
+    "copyright": "© {year} Smart Boost Labs. Hak cipta dilindungi.",
+    "builtWith": "Dibangun dengan Nuxt & Vue"
+  },
+  "contact": {
+    "title": "Hubungi Kami",
+    "subtitle": "Ada pertanyaan? Kami dengan senang hati mendengar dari Anda. Kirimkan pesan dan kami akan merespons secepat mungkin.",
+    "form": {
+      "name": "Nama Lengkap",
+      "namePlaceholder": "John Doe",
+      "email": "Alamat Email",
+      "emailPlaceholder": "john{'@'}contoh.com",
+      "subject": "Subjek",
+      "subjectPlaceholder": "Bagaimana kami bisa membantu?",
+      "message": "Pesan",
+      "messagePlaceholder": "Ceritakan lebih lanjut tentang pertanyaan Anda...",
+      "submit": "Kirim Pesan",
+      "sending": "Mengirim...",
+      "success": "Pesan berhasil dikirim! Kami akan segera menghubungi Anda.",
+      "error": "Terjadi kesalahan. Silakan coba lagi.",
+      "required": "Bidang ini wajib diisi",
+      "invalidEmail": "Silakan masukkan alamat email yang valid"
+    },
+    "info": {
+      "title": "Informasi Kontak",
+      "email": "Email",
+      "emailValue": "support{'@'}smartboostlabs.com",
+      "location": "Lokasi",
+      "locationValue": "Remote — Seluruh Dunia",
+      "response": "Waktu Respons",
+      "responseValue": "Dalam 24 jam"
+    },
+    "social": {
+      "title": "Ikuti Kami",
+      "twitter": "Twitter",
+      "github": "GitHub",
+      "discord": "Discord"
+    }
+  },
+  "faq": {
+    "title": "Pertanyaan yang Sering Diajukan",
+    "subtitle": "Temukan jawaban untuk pertanyaan paling umum tentang Smart Boost Labs.",
+    "search": {
+      "placeholder": "Cari pertanyaan..."
+    },
+    "categories": {
+      "general": "Umum",
+      "billing": "Pembayaran & Harga",
+      "technical": "Teknis",
+      "campaigns": "Kampanye"
+    },
+    "items": {
+      "whatIs": {
+        "q": "Apa itu Smart Boost Labs?",
+        "a": "Smart Boost Labs adalah platform pertukaran traffic bertenaga AI yang membantu Anda mendapatkan traffic berkualitas tinggi dan tertarget ke website Anda. Tidak seperti pertukaran traffic tradisional, kami menggunakan algoritma routing cerdas untuk mencocokkan konten Anda dengan audiens yang terlibat, menghasilkan engagement lebih tinggi dan ROI lebih baik."
+      },
+      "howItWorks": {
+        "q": "Bagaimana cara kerja pertukaran traffic?",
+        "a": "Platform kami bekerja dengan menghubungkan pemilik website yang ingin mendapatkan traffic. Ketika Anda menjalankan kampanye, website Anda ditampilkan ke peserta lain, dan sebagai imbalannya, website mereka ditampilkan ke audiens target Anda. Mesin routing AI kami mengoptimalkan proses pencocokan ini secara real-time."
+      },
+      "gettingStarted": {
+        "q": "Bagaimana cara memulai?",
+        "a": "Cukup daftar akun gratis, buat kampanye pertama Anda dengan menambahkan URL website dan mengonfigurasi pengaturan target, lalu deploy worker di server Anda. Setelah diaktifkan, Anda akan langsung mulai menerima traffic."
+      },
+      "workerDeploy": {
+        "q": "Bagaimana cara deploy worker?",
+        "a": "Worker dapat di-deploy di server mana pun dengan Node.js. Unduh paket worker kami, konfigurasikan dengan API key Anda, dan jalankan. Worker dapat dijalankan sebagai container Docker, layanan systemd, atau proses PM2. Lihat dokumentasi kami untuk panduan deployment detail."
+      },
+      "targeting": {
+        "q": "Opsi penargetan apa saja yang tersedia?",
+        "a": "Anda dapat menargetkan traffic berdasarkan negara, tipe perangkat (desktop/mobile/tablet), browser, dan durasi kunjungan. AI kami juga secara otomatis mengoptimalkan penargetan berdasarkan metrik engagement untuk memaksimalkan performa kampanye Anda."
+      },
+      "credits": {
+        "q": "Bagaimana cara kerja kredit?",
+        "a": "Kredit adalah mata uang di Smart Boost Labs. Satu kredit dikonsumsi untuk setiap kunjungan yang diterima website Anda. Anda memperoleh kredit dengan meminta worker Anda melayani kunjungan ke peserta lain. Anda juga dapat membeli kredit tambahan di halaman harga kami."
+      },
+      "pricing": {
+        "q": "Apa yang terjadi ketika kredit saya habis?",
+        "a": "Ketika kredit Anda habis, kampanye Anda akan dijeda secara otomatis. Anda dapat membeli kredit tambahan kapan saja, atau memperoleh lebih banyak dengan meningkatkan kapasitas worker Anda. Kami akan mengirimkan notifikasi sebelum kredit habis."
+      },
+      "refund": {
+        "q": "Apakah ada pengembalian dana?",
+        "a": "Ya, kami menawarkan jaminan uang kembali 7 hari untuk semua paket berbayar. Jika Anda tidak puas dengan layanan kami, hubungi tim dukungan kami dalam 7 hari setelah pembelian untuk pengembalian dana penuh."
+      },
+      "api": {
+        "q": "Apakah ada API yang tersedia?",
+        "a": "Ya! Paket Profesional dan Enterprise termasuk akses API penuh. Anda dapat membuat kampanye, mengambil data analitik, mengelola worker, dan mengintegrasikan dengan alat yang ada secara terprogram. Lihat dokumentasi API kami untuk detailnya."
+      },
+      "integrations": {
+        "q": "Integrasi apa saja yang didukung?",
+        "a": "Kami mendukung integrasi webhook dengan layanan apa pun yang menerima permintaan HTTP. Integrasi siap pakai termasuk Slack, Discord, webhook untuk platform analitik, dan Zapier. Integrasi kustom dapat dikonfigurasi melalui sistem webhook kami."
+      }
+    }
+  },
+  "terms": {
+    "title": "Ketentuan Layanan",
+    "lastUpdated": "Terakhir diperbarui: 1 Januari 2025",
+    "sections": {
+      "acceptance": {
+        "title": "1. Penerimaan Syarat",
+        "content": "Dengan mengakses dan menggunakan Smart Boost Labs (\"Layanan\"), Anda menerima syarat dan ketentuan layanan kami."
+      },
+      "service": {
+        "title": "2. Deskripsi Layanan",
+        "content": "Smart Boost Labs Platform ini menyediakan platform pertukaran lalu lintas berbasis AI untuk membantu pengguna menghasilkan dan melacak kunjungan situs web. Layanan ini mencakup manajemen aktivitas berbasis web, alat penyebaran pekerja, analitik waktu nyata, dan akses API."
+      },
+      "account": {
+        "title": "3. Akun dan Tanggung Jawab",
+        "content": "Anda bertanggung jawab untuk menjaga kerahasiaan kredensial akun Anda dan untuk semua aktivitas yang terjadi di bawah akun Anda. Anda setuju untuk segera memberi tahu kami tentang setiap penggunaan akun yang tidak sah. Anda harus berusia minimal 18 tahun untuk menggunakan Layanan."
+      },
+      "acceptableUse": {
+        "title": "4. Kebijakan Penggunaan yang Dapat Diterima",
+        "content": "Anda setuju untuk tidak menggunakan Layanan untuk tujuan ilegal atau dalam pelanggaran hukum yang berlaku. Berikut ini dilarang keras:\n\n• Distribusi spam, malware, atau konten berbahaya\n• Aktivitas phishing atau penipuan\n• Konten yang melanggar hak kekayaan intelektual\n• Konten dewasa, ujaran kebencian, atau konten kekerasan\n• Penambangan cryptocurrency atau penyalahgunaan sumber daya lainnya\n• Aktivitas apa pun yang dapat merugikan pengguna lain atau platform"
+      },
+      "credits": {
+        "title": "5. Kredit dan Penagihan",
+        "content": "Kredit yang dibeli atau diperoleh di Smart Boost Labs tidak memiliki nilai tunai dan tidak dapat ditransfer. Kredit kedaluwarsa 12 bulan setelah pembelian. Pengembalian dana tersedia dalam 7 hari setelah pembelian untuk kredit yang belum digunakan. Kami berhak mengubah harga kapan saja dengan pemberitahuan 30 hari."
+      },
+      "workers": {
+        "title": "6. Deployment Worker",
+        "content": "Pengguna dapat men-deploy instance worker untuk berpartisipasi dalam pertukaran traffic. Worker harus dikonfigurasi sesuai dokumentasi kami. Penyalahgunaan sistem worker, termasuk tetapi tidak terbatas pada menjalankan modifikasi yang tidak sah, akan mengakibatkan penghentian akun segera."
+      },
+      "data": {
+        "title": "7. Data dan Analitik",
+        "content": "Kami mengumpulkan data yang diperlukan untuk pengoperasian Layanan, termasuk log kunjungan, data analitik kampanye, dan data perilaku pengguna. Anda tetap memiliki kepemilikan data kampanye Anda. Kami dapat menggunakan data anonim dan agregat untuk peningkatan platform dan tujuan analitik."
+      },
+      "intellectualProperty": {
+        "title": "8. Kekayaan Intelektual",
+        "content": "Layanan dan konten asli, fitur, dan fungsinya adalah milik Smart Boost Labs dan dilindungi oleh undang-undang hak cipta, merek dagang, paten, rahasia dagang, dan undang-undang kekayaan intelektual internasional lainnya."
+      },
+      "termination": {
+        "title": "9. Penghentian",
+        "content": "Kami dapat终止 atau menangguhkan akun Anda segera, tanpa pemberitahuan sebelumnya, untuk setiap pelanggaran Syarat ini. Upon termination, hak Anda untuk menggunakan Layanan akan segera berakhir. Ketentuan yang menurut sifatnya harus tetap berlaku setelah pengakhiran akan tetap berlaku."
+      },
+      "disclaimer": {
+        "title": "10. Penafian Garansi",
+        "content": "LAYANAN Disediakan \"SEBAGAIMANA ADANYA\" DAN \"SEBAGAIMANA TERSEDIA\" TANPA JAMINAN APAPUN, BAIK EKSPRESI MAUPUN IMPLISIT. Kami tidak menjamin bahwa Layanan akan uninterrupted, aman, atau bebas kesalahan."
+      },
+      "limitation": {
+        "title": "11. Batasan Tanggung Jawab",
+        "content": "Dalam keadaan apa pun, Smart Boost Labs tidak akan bertanggung jawab atas kerusakan tidak langsung, insidental, khusus, konsekuensial, atau punishment yang dihasilkan dari penggunaan atau ketidakmampuan Anda untuk menggunakan Layanan. Total tanggung jawab kami tidak akan melebihi jumlah yang Anda bayar dalam 12 bulan sebelum klaim."
+      },
+      "changes": {
+        "title": "12. Perubahan Syarat",
+        "content": "Kami berhak mengubah syarat ini kapan saja. Kami akan memberikan通知 perubahan signifikan melalui email atau melalui Layanan. Continued use of the Service after modifications constitutes acceptance of the updated terms."
+      },
+      "governing": {
+        "title": "13. Hukum yang Mengatur",
+        "content": "Syarat-syarat ini akan diatur oleh dan ditafsirkan sesuai dengan hukum yurisdiksi tempat Smart Boost Labs beroperasi, tanpa memperhatikan冲突 of law provisions."
+      },
+      "contact": {
+        "title": "14. Informasi Kontak",
+        "content": "Jika Anda memiliki pertanyaan tentang Syarat-syarat ini, silakan hubungi kami di legal{'@'}smartboostlabs.com"
+      }
+    }
+  },
+  "privacy": {
+    "title": "Kebijakan Privasi",
+    "lastUpdated": "Terakhir diperbarui: 1 Januari 2025",
+    "intro": "Smart Boost Labs (\"kami\", \"milik kami\", atau \"kami\") berkomitmen untuk melindungi privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, mengungkapkan, dan melindungi informasi Anda ketika Anda menggunakan layanan kami.",
+    "sections": {
+      "informationCollection": {
+        "title": "1. Informasi yang Kami Kumpulkan",
+        "items": {
+          "personal": {
+            "title": "Informasi Pribadi",
+            "description": "Ketika Anda mendaftar akun, kami mengumpulkan informasi seperti nama, alamat email, dan informasi pembayaran. Anda juga dapat memilih untuk memberikan informasi profil tambahan."
+          },
+          "usage": {
+            "title": "Data Penggunaan",
+            "description": "Kami secara otomatis收集 informasi tentang bagaimana Anda berinteraksi dengan Layanan kami, termasuk alamat IP, jenis browser, halaman yang dikunjungi, waktu yang dihabiskan di halaman, dan data diagnostik lainnya."
+          },
+          "campaign": {
+            "title": "Data Kampanye",
+            "description": "Informasi tentang kampanye Anda, termasuk URL website, pengaturan penargetan, data analitik, dan metrik performa kampanye."
+          },
+          "worker": {
+            "title": "Data Worker",
+            "description": "Data teknis dari worker yang Anda deploy, termasuk informasi server, data sesi, dan metrik performa."
+          }
+        }
+      },
+      "useOfInformation": {
+        "title": "2. Cara Kami Menggunakan Informasi Anda",
+        "content": "Kami menggunakan informasi yang dikumpulkan untuk:\n\n• Menyediakan, memelihara, dan meningkatkan layanan kami.\n• Memproses transaksi dan mengelola akun Anda\n• Mengirimkan pemberitahuan teknis dan pesan dukungan kepada Anda.\n• Menganalisis pola penggunaan untuk mengoptimalkan layanan.\n• Deteksi, pencegahan, dan penyelesaian masalah teknis.\n• Memberikan dukungan pelanggan\n• Menyampaikan informasi tentang produk, layanan, dan pembaruan."
+      },
+      "dataSharing": {
+        "title": "3. Berbagi Data",
+        "content": "Kami tidak menjual informasi pribadi Anda. Kami dapat berbagi data dengan:\n\n• Penyedia layanan yang membantu mengoperasikan platform tersebut.\n• Menganalisis mitra kami untuk meningkatkan layanan kami\n• Ungkapkan kepada pihak berwenang bila diwajibkan oleh hukum.\n• Dibagikan dengan mitra bisnis dengan persetujuan Anda."
+      },
+      "dataSecurity": {
+        "title": "4. Keamanan Data",
+        "content": "Kami menerapkan langkah-langkah keamanan standar industri, termasuk enkripsi saat data dikirim dan saat data disimpan, kontrol akses, audit keamanan berkala, dan infrastruktur cloud yang aman. Meskipun kami berupaya melindungi data Anda, metode transmisi melalui internet tidak 100% aman."
+      },
+      "cookies": {
+        "title": "5. Cookie dan Pelacakan",
+        "content": "Kami menggunakan cookie dan teknologi pelacakan serupa untuk mengoperasikan layanan kami. Cookie yang diperlukan dibutuhkan untuk fungsionalitas dasar. Menganalisis cookie membantu kami memahami bagaimana pengunjung menggunakan situs web kami. Anda dapat mengontrol preferensi cookie Anda melalui pengaturan browser Anda."
+      },
+      "yourRights": {
+        "title": "6. Hak Anda",
+        "content": "Tergantung pada lokasi Anda, Anda mungkin memiliki hak-hak berikut:\n\n• Akses informasi pribadi Anda\n• Memperbaiki data yang tidak akurat\n• Hapus data Anda\n• Menentang pemrosesan data\n• Ekspor data Anda\n• Penarikan persetujuan\n\nUntuk menggunakan hak-hak ini，Tolong berikan privacy{'@'}smartboostlabs.com Hubungi kami."
+      },
+      "dataRetention": {
+        "title": "7. Retensi Data",
+        "content": "Kami akan menghapus informasi pribadi Anda setelah akun Anda tidak aktif atau jika kami perlu menghapus informasi pribadi Anda untuk memenuhi syarat hukum atau peraturan kami."
+      },
+      "international": {
+        "title": "8. Transmisi internasional",
+        "content": "Kami memanggap informasi Anda sebagai informasi pribadi dan tidak akan di transfer ke negara lain."
+      },
+      "children": {
+        "title": "9. Privasi anak-anak",
+        "content": "Kami tidak menyediakan layanan untuk anak-anak bawah 18 tahun."
+      },
+      "changes": {
+        "title": "10. Pebijakan Privasi diubah",
+        "content": "Kami mungkin akan mengubah Kebijakan Privasi ini dari time to time."
+      },
+      "contact": {
+        "title": "11. Hubungi Kami",
+        "content": "Kami dapat menghubungi kami melalui privacy{'@'}smartboostlabs.com Hubungi kami."
+      }
+    }
+  },
+  "about": {
+    "title": "Tentang",
+    "hero": {
+      "badge": "Kisah Kami",
+      "title": "Mendorong Masa Depan",
+      "titleHighlight": "Traffic Berbasis AI",
+      "subtitle": "Smart Boost Labs dibangun untuk menyelesaikan inefisiensi pertukaran traffic tradisional. Kami memanfaatkan kecerdasan buatan untuk menciptakan jaringan traffic yang lebih cerdas, lebih efisien, dan berkualitas tinggi untuk bisnis di seluruh dunia."
+    },
+    "mission": {
+      "label": "Misi Kami",
+      "title": "Demokratisasi Traffic Berkualitas Tinggi",
+      "description": "Kami percaya setiap bisnis berhak mendapatkan akses ke traffic berkualitas tanpa kompleksitas dan pemborosan iklan tradisional. Platform kami yang didukung AI mengotomatiskan bagian-bagian yang sulit sehingga Anda dapat fokus pada yang terpenting — mengembangkan bisnis Anda.",
+      "points": {
+        "efficiency": "Maksimalkan ROI dengan penargetan yang dioptimalkan AI",
+        "quality": "Kirimkan pengunjung yang tulus dan terlibat ke situs Anda",
+        "transparency": "Visibilitas penuh untuk setiap impressi dan klik",
+        "simplicity": "Siapkan kampanye dalam hitungan menit, bukan jam"
+      }
+    },
+    "vision": {
+      "label": "Visi Kami",
+      "title": "Masa Depan Pertukaran Traffic",
+      "description": "Kami membayangkan dunia di mana pertukaran traffic bersifat cerdas, etis, dan dapat diakses oleh semua orang. Dunia di mana bisnis dari semua ukuran dapat bersaing di lapangan permainan yang setara."
+    },
+    "values": {
+      "title": "Nilai-Nilai Kami",
+      "subtitle": "Prinsip-prinsip yang memandu setiap hal yang kami bangun",
+      "items": {
+        "innovation": {
+          "title": "Inovasi Primero",
+          "description": "Kami terus mendorong batas-batas kemungkinan dengan AI dan automasi."
+        },
+        "transparency": {
+          "title": "Transparansi Radikal",
+          "description": "Tanpa biaya tersembunyi, tanpa traffic palsu, tanpa trik. Hanya hasil yang jujur dan terukur."
+        },
+        "userFocus": {
+          "title": "Kesuksesan Pengguna",
+          "description": "Kesuksesan Anda adalah kesuksesan kami. Kami membangun fitur yang benar-benar memberikan dampak."
+        },
+        "reliability": {
+          "title": "Dibuat untuk Bertahan",
+          "description": "Infrastruktur级别 perusahaan yang dapat Anda andalkan, 24/7."
+        }
+      }
+    },
+    "team": {
+      "label": "Tim Kami",
+      "title": "Temui Orang-Orang di Balik Smart Boost Labs",
+      "subtitle": "Tim yang beragam dari engineer, desainer, dan pemasar yang bersatu dalam passion untuk membangun alat yang lebih baik.",
+      "join": "Ingin bergabung dengan kami?",
+      "joinLink": "Lihat lowongan pekerjaan"
+    },
+    "tech": {
+      "label": "Teknologi",
+      "title": "Dibangun dengan Teknologi Modern",
+      "subtitle": "Kami menggunakan teknologi mutakhir untuk menghadirkan platform yang cepat, andal, dan dapat diskalakan.",
+      "stack": {
+        "frontend": "Frontend",
+        "backend": "Backend",
+        "infrastructure": "Infrastruktur"
+      }
+    },
+    "milestones": {
+      "label": "Pencapaian",
+      "title": "Perjalanan Kami",
+      "subtitle": "Dari ide kecil hingga platform yang melayani ribuan pengguna di seluruh dunia.",
+      "items": {
+        "m1": {
+          "date": "Q1 2024",
+          "title": "Awal Mula",
+          "description": "Didirikan dengan visi merevolusi pertukaran traffic dengan AI."
+        },
+        "m2": {
+          "date": "Q2 2024",
+          "title": "Peluncuran Beta Pertama",
+          "description": "Meluncurkan beta tertutup dengan 500 pengguna awal. Mendapat umpan balik yang sangat positif."
+        },
+        "m3": {
+          "date": "Q3 2024",
+          "title": "Peluncuran Publik",
+          "description": "Terbuka untuk publik dengan mesin routing AI, analitik real-time, dan sistem worker."
+        },
+        "m4": {
+          "date": "Q4 2024",
+          "title": "10.000 Pengguna",
+          "description": "Mencapai pencapaian 10.000 pengguna aktif dan peluncuran paket enterprise."
+        },
+        "m5": {
+          "date": "Q1 2025",
+          "title": "API & Integrasi",
+          "description": "Merilis API publik, integrasi webhook, dan konektor Slack/Discord."
+        },
+        "m6": {
+          "date": "Q2 2025",
+          "title": "Mesin AI v2",
+          "description": "Meluncurkan routing AI generasi berikutnya dengan optimalisasi engagement prediktif."
+        }
+      }
+    },
+    "cta": {
+      "title": "Siap untuk Memulai?",
+      "subtitle": "Bergabunglah dengan ribuan pemasar dan developer yang menggunakan Smart Boost Labs untuk mendapatkan traffic berkualitas.",
+      "primary": "Mulai Uji Coba Gratis",
+      "secondary": "Hubungi Kami"
+    }
+  },
+  "docs": {
+    "title": "Dokumentasi",
+    "subtitle": "Semua yang Anda butuhkan untuk mengintegrasikan dan mengelola Smart Boost Labs.",
+    "sidebar": {
+      "gettingStarted": "Memulai",
+      "authentication": "Autentikasi",
+      "campaigns": "Kampanye",
+      "workers": "Worker",
+      "analytics": "Analitik",
+      "integrations": "Integrasi",
+      "api": "Referensi API",
+      "webhooks": "Webhook",
+      "sdks": "SDK & Library"
+    },
+    "sections": {
+      "gettingStarted": {
+        "title": "Memulai",
+        "overview": {
+          "title": "Ringkasan",
+          "description": "Selamat datang di dokumentasi API Smart Boost Labs. API kami memungkinkan Anda mengelola kampanye, worker, dan analitik secara terprogram."
+        },
+        "quickStart": {
+          "title": "Mulai Cepat",
+          "description": "Jalankan dalam 5 menit.",
+          "steps": [
+            "Daftar akun Smart Boost Labs",
+            "Hasilkan API key dari dasbor Anda",
+            "Buat permintaan API pertama Anda",
+            "Deploy worker pertama Anda"
+          ]
+        },
+        "baseUrl": {
+          "title": "Base URL",
+          "description": "Semua permintaan API harus dibuat ke:",
+          "value": "https://api.smartboostlabs.com/v1"
+        }
+      },
+      "authentication": {
+        "title": "Autentikasi",
+        "description": "Otentikasi permintaan Anda menggunakan API key.",
+        "apiKey": {
+          "title": "Autentikasi API Key",
+          "description": "Sertakan API key Anda di header Authorization dari semua permintaan:",
+          "example": "Authorization: Bearer YOUR_API_KEY"
+        },
+        "generation": {
+          "title": "Menghasilkan API Key",
+          "description": "Navigasi ke Pengaturan > API Keys di dasbor Anda untuk menghasilkan key baru. Setiap key dapat memiliki izin dan tanggal kedaluwarsa spesifik."
+        }
+      },
+      "campaigns": {
+        "title": "Kampanye",
+        "description": "Buat dan kelola kampanye pertukaran traffic.",
+        "create": {
+          "title": "Membuat Kampanye",
+          "description": "Kirim permintaan POST untuk membuat kampanye baru:",
+          "example": "POST /campaigns\n\n&#123;\n  &quot;name&quot;: &quot;Kampanye Saya&quot;,\n  &quot;url&quot;: &quot;https://contoh.com&quot;,\n  &quot;targeting&quot;: &#123;\n    &quot;countries&quot;: [&quot;ID&quot;, &quot;MY&quot;],\n    &quot;devices&quot;: [&quot;desktop&quot;, &quot;mobile&quot;]\n  &#125;\n&#125;"
+        },
+        "list": {
+          "title": "Mencantumkan Kampanye",
+          "description": "Ambil semua kampanye Anda:",
+          "example": "GET /campaigns"
+        },
+        "status": {
+          "title": "Status Kampanye",
+          "description": "Kampanye dapat memiliki status berikut: aktif, dijeda, selesai, atau diarsipkan."
+        }
+      },
+      "workers": {
+        "title": "Workers",
+        "description": "Deploy dan kelola browser worker.",
+        "setup": {
+          "title": "Setup Worker",
+          "description": "Worker adalah agen automasi browser ringan yang mengunjungi website di kampanye Anda.",
+          "install": "npm install {'@'}forge-exchange/worker",
+          "run": "forge-worker start --api-key YOUR_API_KEY"
+        },
+        "config": {
+          "title": "Konfigurasi",
+          "description": "Konfigurasikan worker Anda melalui file konfigurasi atau variabel lingkungan."
+        }
+      },
+      "analytics": {
+        "title": "Analitik",
+        "description": "Lacak performa kampanye dan engagement pengguna.",
+        "metrics": {
+          "title": "Metrik yang Tersedia",
+          "description": "Metrik utama yang tersedia via API:",
+          "list": [
+            "impressions — Jumlah kali situs Anda ditampilkan",
+            "clicks — Jumlah kunjungan ke situs Anda",
+            "engagement — Rata-rata waktu di situs",
+            "bounceRate — Persentase kunjungan satu halaman",
+            "conversions — Peristiwa konversi yang dilacak"
+          ]
+        }
+      },
+      "webhooks": {
+        "title": "Webhook",
+        "description": "Terima notifikasi real-time untuk event kampanye.",
+        "setup": {
+          "title": "Menyiapkan Webhook",
+          "description": "Konfigurasikan endpoint webhook di dasbor Anda atau via API.",
+          "example": "POST /integrations\n\n&#123;\n  &quot;type&quot;: &quot;webhook&quot;,\n  &quot;url&quot;: &quot;https://server-anda.com/webhook&quot;,\n  &quot;events&quot;: [&quot;campaign.started&quot;, &quot;campaign.completed&quot;]\n&#125;"
+        },
+        "events": {
+          "title": "Event yang Tersedia",
+          "description": "Berlangganan event seperti: campaign.started, campaign.stopped, campaign.completed, worker.online, worker.offline, analytics.updated"
+        }
+      },
+      "apiReference": {
+        "title": "Referensi API",
+        "description": "Referensi API lengkap dengan semua endpoint, parameter, dan format respons.",
+        "endpoints": "Jelajahi semua endpoint yang tersedia dan dokumentasinya.",
+        "rateLimits": "Batas tarif: 1000 permintaan per menit untuk paket Profesional, 10000 untuk Enterprise."
+      },
+      "integrations": {
+        "title": "Webhooks",
+        "description": "Smart Boost Labs supports webhook-based integrations. You can send events to any HTTP endpoint.",
+        "slack": {
+          "title": "Slack Integration",
+          "description": "Receive campaign notifications directly in your Slack workspace.",
+          "example": "POST /integrations\n\n&#123;\n  &quot;type&quot;: &quot;slack&quot;,\n  &quot;webhook_url&quot;: &quot;https://hooks.slack.com/services/...&quot;\n&#125;"
+        },
+        "discord": {
+          "title": "Discord Integration",
+          "description": "Get real-time alerts in your Discord server.",
+          "example": "POST /integrations\n\n&#123;\n  &quot;type&quot;: &quot;discord&quot;,\n  &quot;webhook_url&quot;: &quot;https://discord.com/api/webhooks/...&quot;\n&#125;"
+        }
+      }
+    }
+  }
+}

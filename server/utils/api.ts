@@ -1,0 +1,29 @@
+import type { H3Event } from "h3";
+import { H3Error, parseCookies, deleteCookie } from "h3";
+
+export const handleRequestError = (error: unknown) => {
+  if (error instanceof H3Error) {
+    return error;
+  }
+  return createError({
+    statusCode: 500,
+    message: error instanceof Error ? error.message : "Server Error",
+  });
+};
+
+export const setSecurityHeaders = (event: H3Event): void => {
+  setHeader(event, "Cache-Control", "no-store, max-age=0");
+  setHeader(
+    event,
+    "CDN-Cache-Control",
+    "max-age=60, stale-while-revalidate=300",
+  );
+};
+
+export const clearAllCookies = (event: H3Event) => {
+  const cookies = parseCookies(event);
+
+  for (const cookieName in cookies) {
+    deleteCookie(event, cookieName);
+  }
+};

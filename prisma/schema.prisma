@@ -1,0 +1,406 @@
+generator client {
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x", "rhel-openssl-1.0.x", "debian-openssl-3.0.x", "darwin-arm64", "windows", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x", "debian-openssl-1.1.x"]
+  previewFeatures = ["postgresqlExtensions", "relationJoins"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [uuidOssp(map: "uuid-ossp"), pgcrypto]
+}
+
+enum UserRole {
+  user
+  admin
+  superadmin
+}
+
+model Role {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name      UserRole @default(user)
+  level     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  users     User[]
+
+  @@unique([name, level], name: "role_name_level_unique")
+  @@index([name], name: "role_name_idx")
+  @@index([level], name: "role_level_idx")
+  @@map("roles")
+}
+
+model User {
+  id                  String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email               String               @unique @db.VarChar(255)
+  passwordHash        String?              @map("password_hash") @db.Text
+  name                String?              @db.VarChar(255)
+  avatarUrl           String?              @map("avatar_url") @db.VarChar(500)
+  timezone            String?              @default("UTC") @db.VarChar(100)
+  role                Role                 @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role_id             String               @map("role_id") @db.Uuid
+  isActive            Boolean              @default(true) @map("is_active")
+  emailVerified       Boolean              @default(false) @map("email_verified")
+  emailVerifiedAt     DateTime?            @map("email_verified_at") @db.Timestamptz
+  lastLoginAt         DateTime?            @map("last_login_at") @db.Timestamptz
+  lastLoginIp         String?              @map("last_login_ip") @db.VarChar(45)
+  // OAuth
+  oauthProvider       String?              @map("oauth_provider") @db.VarChar(50)
+  oauthProviderId     String?              @map("oauth_provider_id") @db.VarChar(255)
+  // API Access
+  apiKey              String?              @unique @map("api_key") @db.VarChar(64)
+  apiKeyCreatedAt     DateTime?            @map("api_key_created_at") @db.Timestamptz
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt           DateTime?            @map("deleted_at") @db.Timestamptz
+  // Relations
+  accounts            Account[]
+  systemLogs          SystemLog[]
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+  // Proxy domain
+  proxies             Proxy[]
+  proxyPools          ProxyPool[]
+  proxySources        ProxySource[]
+  scrapeJobs          ScrapeJob[]
+  quota               UserQuota?
+
+  @@unique([email, role_id], name: "user_email_role_id_unique")
+  @@index([role_id], name: "idx_users_role_id")
+  @@index([createdAt], name: "idx_users_created_at")
+  @@index([apiKey], name: "idx_users_api_key")
+  @@map("users")
+}
+
+model Account {
+  id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id             String    @map("user_id") @db.Uuid
+  type                String
+  provider            String
+  provider_account_id String
+  refresh_token       String?   @db.Text
+  access_token        String?   @db.Text
+  expires_at          Int?
+  token_type          String?
+  scope               String?
+  id_token            String?   @db.Text
+  session_state       String?
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz
+
+  @@unique([provider, provider_account_id], name: "account_provider_provider_account_id_unique")
+  @@index([user_id], name: "account_user_id_idx")
+  @@index([provider], name: "account_provider_idx")
+  @@index([createdAt], name: "account_created_at_idx")
+  @@index([updatedAt], name: "account_updated_at_idx")
+  @@index([deletedAt], name: "account_deleted_at_idx")
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String    @unique
+  expires    DateTime  @map("expires") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+
+  @@unique([identifier, token], name: "verification_token_identifier_token_unique")
+  @@index([token], name: "verification_token_token_idx")
+  @@map("verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  token     String   @unique @db.Text
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires   DateTime @map("expires") @db.Timestamptz
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([token], name: "password_reset_token_idx")
+  @@index([userId], name: "password_reset_user_id_idx")
+  @@index([expires], name: "password_reset_expires_idx")
+  @@index([createdAt], name: "password_reset_created_at_idx")
+  @@map("password_reset_tokens")
+}
+
+model Setting {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key        String   @db.Text
+  value      String   @db.Text
+  group_name String   @db.Text
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  @@unique([key, group_name], name: "setting_key_group_name_unique")
+  @@index([key], name: "setting_key_idx")
+  @@index([group_name], name: "setting_group_name_idx")
+  @@map("settings")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  resource   String   @db.VarChar(100)
+  resourceId String?  @map("resource_id") @db.Uuid
+  oldValue   Json?    @map("old_value")
+  newValue   Json?    @map("new_value")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_audit_logs_user_id")
+  @@index([action], name: "idx_audit_logs_action")
+  @@index([createdAt], name: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}
+
+model SystemLog {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  level     String   @db.VarChar(20) // info/warn/error/fatal
+  service   String   @db.VarChar(100) // api/worker/queue/scheduler
+  message   String   @db.Text
+  context   Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([id, createdAt], name: "system_logs_pkey")
+  @@index([level], name: "idx_system_logs_level")
+  @@index([service], name: "idx_system_logs_service")
+  @@index([createdAt], name: "idx_system_logs_created_at")
+  @@index([userId], name: "idx_system_logs_user_id")
+  @@map("system_logs")
+}
+
+/// Quota gateway per user (1:1). Dipisah dari User agar tak ikut ter-serialize
+/// ke session (BigInt tidak JSON-safe). null = unlimited. Diatur admin.
+model UserQuota {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @unique @map("user_id") @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotaBytes    BigInt?  @map("quota_bytes")
+  quotaRequests BigInt?  @map("quota_requests")
+  usedBytes     BigInt   @default(0) @map("used_bytes")
+  usedRequests  BigInt   @default(0) @map("used_requests")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("user_quotas")
+}
+
+// =====================================================================
+// PROXY DOMAIN  (Fase 1)
+// =====================================================================
+
+enum ProxyProtocol {
+  http
+  https
+  socks5
+}
+
+enum ProxyCategory {
+  RESIDENTIAL_ROTATING
+  MOBILE_ROTATING
+}
+
+enum ProxyStatus {
+  pending
+  checking
+  active
+  dead
+  banned
+}
+
+enum AnonymityLevel {
+  transparent
+  anonymous
+  elite
+  unknown
+}
+
+enum RotationMode {
+  per_request
+  sticky
+}
+
+enum ProxySourceType {
+  manual_import
+  file_import
+  scraper
+  api
+}
+
+/// Asal-usul sekumpulan proxy (paste manual, upload file, hasil scraper, push API).
+model ProxySource {
+  id        String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  type      ProxySourceType
+  label     String          @db.VarChar(150) // "free-proxy-list.net", "paste 2026-06-15"
+  url       String?         @db.Text
+  userId    String          @map("user_id") @db.Uuid
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  proxies   Proxy[]
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([userId], name: "idx_proxy_sources_user_id")
+  @@index([type], name: "idx_proxy_sources_type")
+  @@map("proxy_sources")
+}
+
+/// Satu upstream proxy asli. category diisi dari hasil klasifikasi (isMobile).
+model Proxy {
+  id                   String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  host                 String            @db.VarChar(255)
+  port                 Int
+  protocol             ProxyProtocol     @default(http)
+  username             String?           @db.VarChar(255)
+  password             String?           @db.VarChar(255)
+  // Klasifikasi & geo
+  category             ProxyCategory     @default(RESIDENTIAL_ROTATING)
+  isMobile             Boolean           @default(false) @map("is_mobile")
+  country              String?           @db.VarChar(2) // ISO-3166 alpha-2
+  region               String?           @db.VarChar(100)
+  city                 String?           @db.VarChar(100)
+  asn                  Int?
+  asnOrg               String?           @map("asn_org") @db.VarChar(255)
+  usageType            String?           @map("usage_type") @db.VarChar(20) // MOB/ISP/DCH/...
+  classificationSource String?           @map("classification_source") @db.VarChar(30) // local/ip-api
+  anonymity            AnonymityLevel    @default(unknown)
+  // Health
+  status               ProxyStatus       @default(pending)
+  latencyMs            Int?              @map("latency_ms")
+  successRate          Float             @default(0) @map("success_rate")
+  uptimeScore          Float             @default(0) @map("uptime_score")
+  failCount            Int               @default(0) @map("fail_count")
+  lastCheckedAt        DateTime?         @map("last_checked_at") @db.Timestamptz
+  lastOkAt             DateTime?         @map("last_ok_at") @db.Timestamptz
+  // Ownership & source
+  userId               String            @map("user_id") @db.Uuid
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceId             String?           @map("source_id") @db.Uuid
+  source               ProxySource?      @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  // Relations
+  members              ProxyPoolMember[]
+  checks               ProxyCheck[]
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt            DateTime?         @map("deleted_at") @db.Timestamptz
+
+  @@unique([host, port, protocol, userId], name: "proxy_host_port_protocol_user_unique")
+  @@index([userId], name: "idx_proxies_user_id")
+  @@index([status], name: "idx_proxies_status")
+  @@index([category], name: "idx_proxies_category")
+  @@index([country], name: "idx_proxies_country")
+  @@index([isMobile], name: "idx_proxies_is_mobile")
+  @@index([sourceId], name: "idx_proxies_source_id")
+  @@map("proxies")
+}
+
+/// Endpoint rotating. Kredensial gateway meng-encode pool + opsi (country/session/type).
+model ProxyPool {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String            @db.VarChar(150)
+  category        ProxyCategory
+  isDefault       Boolean           @default(false) @map("is_default") // pool default per kategori per user
+  rotationMode    RotationMode      @default(per_request) @map("rotation_mode")
+  stickyTtlSec    Int?              @map("sticky_ttl_sec")
+  // Akses gateway
+  gatewayUsername String            @unique @map("gateway_username") @db.VarChar(64)
+  gatewayPassword String            @map("gateway_password") @db.VarChar(255)
+  // Filter default (opsional)
+  filterCountry   String?           @map("filter_country") @db.VarChar(2)
+  filterProtocol  ProxyProtocol?    @map("filter_protocol")
+  isActive        Boolean           @default(true) @map("is_active")
+  userId          String            @map("user_id") @db.Uuid
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members         ProxyPoolMember[]
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime?         @map("deleted_at") @db.Timestamptz
+
+  @@unique([userId, name], name: "proxy_pool_user_name_unique")
+  @@index([userId], name: "idx_proxy_pools_user_id")
+  @@index([category], name: "idx_proxy_pools_category")
+  @@map("proxy_pools")
+}
+
+/// Keanggotaan many-to-many: satu Proxy boleh ada di banyak Pool.
+model ProxyPoolMember {
+  id      String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  poolId  String    @map("pool_id") @db.Uuid
+  pool    ProxyPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  proxyId String    @map("proxy_id") @db.Uuid
+  proxy   Proxy     @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  enabled Boolean   @default(true)
+  addedAt DateTime  @default(now()) @map("added_at") @db.Timestamptz
+
+  @@unique([poolId, proxyId], name: "pool_member_pool_proxy_unique")
+  @@index([poolId], name: "idx_pool_members_pool_id")
+  @@index([proxyId], name: "idx_pool_members_proxy_id")
+  @@map("proxy_pool_members")
+}
+
+/// Histori hasil cek liveness/anonymity/geo sebuah proxy.
+model ProxyCheck {
+  id          String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  proxyId     String         @map("proxy_id") @db.Uuid
+  proxy       Proxy          @relation(fields: [proxyId], references: [id], onDelete: Cascade)
+  ok          Boolean
+  method      String         @db.VarChar(20) // fast | playwright
+  latencyMs   Int?           @map("latency_ms")
+  exitIp      String?        @map("exit_ip") @db.VarChar(45)
+  exitCountry String?        @map("exit_country") @db.VarChar(2)
+  anonymity   AnonymityLevel @default(unknown)
+  error       String?        @db.Text
+  checkedAt   DateTime       @default(now()) @map("checked_at") @db.Timestamptz
+
+  @@index([proxyId], name: "idx_proxy_checks_proxy_id")
+  @@index([checkedAt], name: "idx_proxy_checks_checked_at")
+  @@map("proxy_checks")
+}
+
+/// Rekam satu run scraper (1 situs sumber).
+model ScrapeJob {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  source     String    @db.VarChar(100) // free-proxy-list.net, sslproxies.org, ...
+  status     String    @db.VarChar(20) // queued | running | done | failed
+  filters    Json? // { country, protocol, anonymity }
+  found      Int       @default(0)
+  imported   Int       @default(0)
+  error      String?   @db.Text
+  userId     String    @map("user_id") @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt  DateTime? @map("started_at") @db.Timestamptz
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId], name: "idx_scrape_jobs_user_id")
+  @@index([status], name: "idx_scrape_jobs_status")
+  @@map("scrape_jobs")
+}
+
+/// Log trafik gateway — basis analytics + billing (bandwidth & request).
+/// Sengaja TANPA relasi FK (tabel high-write): id pool/proxy/user disimpan sebagai kolom ber-index.
+model GatewayRequestLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  poolId     String   @map("pool_id") @db.Uuid
+  proxyId    String?  @map("proxy_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  clientIp   String?  @map("client_ip") @db.VarChar(45)
+  targetHost String?  @map("target_host") @db.VarChar(255)
+  statusCode Int?     @map("status_code")
+  bytesIn    BigInt   @default(0) @map("bytes_in")
+  bytesOut   BigInt   @default(0) @map("bytes_out")
+  latencyMs  Int?     @map("latency_ms")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId, createdAt], name: "idx_gateway_logs_user_created")
+  @@index([poolId, createdAt], name: "idx_gateway_logs_pool_created")
+  @@map("gateway_request_logs")
+}

@@ -1,0 +1,12 @@
+allowBuilds:
+  '@morev/vue-transitions': true
+  '@parcel/watcher': false
+  '@prisma/engines': true
+  '@tailwindcss/oxide': false
+  esbuild: false
+  maplibre-gl: true
+  msgpackr-extract: true
+  prisma: true
+  sharp: true
+  unrs-resolver: false
+  vue-demi: false
