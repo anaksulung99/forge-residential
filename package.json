@@ -44,7 +44,10 @@
     "clsx": "^2.1.1",
     "crawlee": "^3.17.0",
     "date-fns": "^4.4.0",
+    "fingerprint-generator": "^2.1.82",
+    "fingerprint-injector": "^2.1.82",
     "fs-extra": "^11.3.5",
+    "header-generator": "^2.1.82",
     "http-proxy-agent": "^9.1.0",
     "https-proxy-agent": "^9.1.0",
     "ioredis": "^5.11.1",
@@ -108,5 +111,5 @@
     "vue-tsc": "^3.3.3",
     "vue3-flag-icons": "^0.1.5"
   },
-  "packageManager": "pnpm@11.5.2"
+  "packageManager": "pnpm@11.7.0"
 }

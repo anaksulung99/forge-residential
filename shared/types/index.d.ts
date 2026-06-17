@@ -1,4 +1,6 @@
 import type { NavigationMenuItem } from "@nuxt/ui";
+import type { Browser, BrowserContext } from "playwright";
+import type { ProxyPool } from "@prisma/client";
 
 declare global {
   interface Window {
@@ -311,6 +313,7 @@ declare global {
     minLength?: number;
     maxLength?: number;
   }
+
   interface SimplelocalizeCountryItem {
     locale: string;
     language: {
@@ -451,4 +454,124 @@ declare global {
     updated_at?: string;
     responseTime?: number;
   }
+  // ============================================================
+  // PLAYWRIGHT TESTER TYPES
+  // ============================================================
+
+  type BrowserEngine = "CHROMIUM" | "FIREFOX" | "WEBKIT";
+  type DeviceType = "DESKTOP" | "MOBILE";
+  type OSName = "WINDOWS" | "LINUX" | "MACOS" | "ANDROID" | "IOS";
+  type BrowserName =
+    | "CHROME"
+    | "FIREFOX"
+    | "SAFARI"
+    | "EDGE"
+    | "CHROME_MOBILE"
+    | "SAFARI_MOBILE"
+    | "FIREFOX_MOBILE";
+  type BrowserProxyStrategy = "NONE" | "PER_SESSION" | "ROTATE";
+
+  interface BrowserCapabilities {
+    supportsWheel: boolean;
+    isMobile: boolean;
+    isWebKit: boolean;
+    isFirefox: boolean;
+    isChromium: boolean;
+  }
+
+  interface FingerprintHint {
+    name: string;
+    slug: string;
+    deviceType?: DeviceType;
+    osName?: string;
+    osVersion?: string | null;
+    browserName?: string;
+    browserVersion?: string | null;
+    userAgent?: string | null;
+    language?: string;
+    timezone?: string;
+    locale?: string;
+    viewportWidth?: number;
+    viewportHeight?: number;
+    deviceScaleFactor?: number;
+    isMobile?: boolean;
+    hasTouch?: boolean;
+    canvasMode?: string;
+    canvasSeed?: number | null;
+    webglVendor?: string | null;
+    webglRenderer?: string | null;
+    hardwareConcurrency?: number | null;
+    deviceMemory?: number | null;
+    extraConfig?: Record<string, any> | null;
+  }
+
+  interface SessionBrowser {
+    browser: Browser;
+    context: BrowserContext;
+    /** Detected timezone used in this session */
+    timezone: string;
+    /** UA used in this session */
+    userAgent: string;
+    /** Additional for crawlee pool */
+    isMobile?: boolean;
+    capabilities?: {
+      supportsWheel: boolean;
+      isMobile: boolean;
+      isWebKit: boolean;
+    };
+    close: () => Promise<void>;
+  }
+
+  export interface PlaywrightProxy {
+    server: string;
+    username?: string;
+    password?: string;
+    bypass?: string;
+  }
+
+  interface BrowserBehaviourConfig {
+    name: string;
+    slug: string;
+    minDwellSeconds: number;
+    maxDwellSeconds: number;
+    minScrollCount: number;
+    maxScrollCount: number;
+    /** milliseconds between scroll steps */
+    scrollSpeedMin: number;
+    scrollSpeedMax: number;
+    enableInternalNav: boolean;
+    maxInternalClicks: number;
+    /** CSS, XPath, or element id selectors to attempt clicking */
+    clickSelectors: BrowserClickSelector[];
+    // Additional
+    clickProbability?: number;
+    mouseMoveProbability?: number;
+    typingSpeedMin?: number;
+    typingSpeedMax?: number;
+  }
+
+  type BrowserClickSelectorType = "css" | "xpath" | "elementId";
+
+  type BrowserClickSelector =
+    | string
+    | {
+        selector: string;
+        selectorType?: BrowserClickSelectorType | string;
+      };
+
+  interface BrowserSimulateResult {
+    pagesVisited: number;
+    events: BrowserSimulateEvent[];
+    finalUrl: string;
+    durationMs: number;
+  }
+
+  type BrowserSimulateEvent =
+    | "NAVIGATE"
+    | "SCROLL"
+    | "CLICK"
+    | "BACK"
+    | "INTERNAL_NAV"
+    | "MOUSE_MOVE"
+    | "DWELL";
 }

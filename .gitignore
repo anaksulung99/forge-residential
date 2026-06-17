@@ -31,3 +31,4 @@ geoip/*.mmdb
 browsers/
 docs/*
 deploy/*
+.pnpm-store/*

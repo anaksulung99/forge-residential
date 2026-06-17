@@ -15,12 +15,15 @@ import { markProxyFailure, markProxySuccess } from "../utils/proxy-health";
 
 const port = Number(process.env.GATEWAY_PORT || 10000);
 const host = process.env.GATEWAY_HOST_BIND || "0.0.0.0";
+const debug = process.env.GATEWAY_DEBUG === "true";
 
 interface ConnInfo {
   poolId: string;
   userId: string;
   proxyId: string;
   targetHost: string | null;
+  clientIp: string | null;
+  upstream: string | null;
   resolved?: boolean; // sudah dapat sinyal sukses/gagal upstream?
 }
 const conns = new Map<number, ConnInfo>();
@@ -31,28 +34,44 @@ const server = new Server({
   verbose: false,
   prepareRequestFunction: async ({
     connectionId,
+    request,
     username,
     password,
     hostname,
     port,
     isHttp,
   }) => {
+    const clientIp =
+      request.socket.remoteAddress?.replace(/^::ffff:/, "") ?? null;
     const res = await resolveUpstream(username || "", password || "", {
       host: hostname,
       port,
       isHttp,
     });
     if (!res.ok) {
+      if (debug) {
+        console.warn(
+          `[gateway] reject user=${username || "-"} target=${hostname || "-"}:${port || "-"} reason=${res.message}`,
+        );
+      }
       return {
         requestAuthentication: true,
         failMsg: res.message,
       };
+    }
+    if (debug) {
+      const upstream = `${res.upstream.protocol}://${res.upstream.host}:${res.upstream.port}`;
+      console.log(
+        `[gateway] client=${clientIp || "-"} user=${username || "-"} target=${hostname || "-"}:${port || "-"} mode=${isHttp ? "HTTP" : "CONNECT"} upstream=${upstream} proxy=${res.proxyId}`,
+      );
     }
     conns.set(connectionId, {
       poolId: res.poolId,
       userId: res.userId,
       proxyId: res.proxyId,
       targetHost: hostname || null,
+      clientIp,
+      upstream: `${res.upstream.protocol}://${res.upstream.host}:${res.upstream.port}`,
       resolved: false,
     });
     // customTag ikut di event tunnelConnect* untuk atribusi kegagalan upstream
@@ -93,6 +112,12 @@ server.on("connectionClosed", ({ connectionId, stats }) => {
 
   const bytesIn = Math.max(0, Math.round(stats?.srcRxBytes ?? 0));
   const bytesOut = Math.max(0, Math.round(stats?.srcTxBytes ?? 0));
+
+  if (debug) {
+    console.log(
+      `[gateway] closed client=${info.clientIp || "-"} target=${info.targetHost || "-"} upstream=${info.upstream || "-"} proxy=${info.proxyId} bytesIn=${bytesIn} bytesOut=${bytesOut} trgRx=${stats?.trgRxBytes ?? "-"} trgTx=${stats?.trgTxBytes ?? "-"}`,
+    );
+  }
 
   // Sinyal kesehatan untuk koneksi yang belum ter-resolve via event tunnel
   // (mis. plain HTTP, atau upstream refused/timeout → trgRxBytes null).

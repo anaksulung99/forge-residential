@@ -4,7 +4,7 @@ import prettier from "eslint-config-prettier";
 
 export default withNuxt([
   {
-    ignores: [".nuxt", "node_modules", "public", "tailwind.config.js"],
+    ignores: [".nuxt", "node_modules", "public", "tailwind.config.js", "docs"],
   },
   {
     rules: {

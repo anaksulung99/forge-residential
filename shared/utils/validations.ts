@@ -520,6 +520,63 @@ export const ANONYMITY_VALUES = [
   "elite",
 ] as const;
 
+export const typeCheckSchema = z.enum(["Playwright", "Request"]);
+export const browserEngineSchema = z.enum(["CHROMIUM", "FIREFOX", "WEBKIT"]);
+export const browserSelectorTypeSchema = z.enum(["css", "xpath", "elementId"]);
+export const browserTrafficSourceSchema = z.enum([
+  "DIRECT",
+  "SEARCH",
+  "SOCIAL",
+  "REFERRAL",
+]);
+export const browserClickSelectorSchema = z.object({
+  selector: z.string().min(1).max(512),
+  selectorType: browserSelectorTypeSchema.default("css"),
+  description: z.string().max(255).optional(),
+  order: z.number().int().min(0).default(0),
+});
+
+export const testProxySchema = z
+  .object({
+    targetUrl: z.string().url(),
+    type: typeCheckSchema.default("Playwright"),
+    engine: browserEngineSchema.default("CHROMIUM"),
+    gwHost: z.string().min(1).max(255),
+    gwPort: z.coerce.number().int().min(1).max(65535),
+    headless: z.boolean().optional().default(true),
+    totalSessionsTarget: z.number().int().min(0).default(0),
+    maxConcurrency: z.number().int().min(1).max(20).default(5),
+    dailyLimit: z.number().int().min(1).max(100000).default(100),
+    sessionsPerHour: z.number().int().min(1).max(10000).default(10),
+    proxyPoolId: z.string().min(1).max(255),
+    fingerprint: z.string().max(255).optional().default(""),
+    behaviour: z.string().max(255).optional().default(""),
+    launchTimeout: z.coerce.number().int().min(1).max(60000).optional(),
+    navigationTimeout: z.coerce.number().int().min(1).max(60000).optional(),
+    trafficSource: browserTrafficSourceSchema.optional(),
+    referer: z.string().optional(),
+    clickSelectors: z.array(browserClickSelectorSchema).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type !== "Playwright") return;
+
+    if (!data.fingerprint?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fingerprint"],
+        message: "Fingerprint is required for Playwright test.",
+      });
+    }
+
+    if (!data.behaviour?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["behaviour"],
+        message: "Behaviour profile is required for Playwright test.",
+      });
+    }
+  });
+
 export type SourceType = (typeof SOURCE_VALUES)[number];
 export type ProtocolType = (typeof PROTOCOL_VALUES)[number];
 export type AnonymityType = (typeof ANONYMITY_VALUES)[number];
@@ -598,8 +655,20 @@ export const AssignRoleSchema = toTypedSchema(assignRoleSchema);
 export const SetActiveSchema = toTypedSchema(setStatusActiveSchema);
 export const UpdateUserSchema = toTypedSchema(updateUserSchema);
 
+export const TypeCheckSchema = toTypedSchema(typeCheckSchema);
+export const BrowserEngineSchema = toTypedSchema(browserEngineSchema);
+export const BrowserSelectorTypeSchema = toTypedSchema(
+  browserSelectorTypeSchema,
+);
+export const BrowserTrafficSourceSchema = toTypedSchema(
+  browserTrafficSourceSchema,
+);
+export const BrowserClickSelectorSchema = toTypedSchema(
+  browserClickSelectorSchema,
+);
 export const ToolsScrapeSource = toTypedSchema(toolsScrapeSource);
 export const ToolsScrapeSchema = toTypedSchema(toolsScrapeSchema);
+export const TestProxySchema = toTypedSchema(testProxySchema);
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -626,3 +695,16 @@ export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type ToolsScrapeSourceInput = z.infer<typeof toolsScrapeSource>;
 export type ToolsScrapeOutput = z.output<typeof toolsScrapeSchema>;
 export type ToolsScrapeInput = z.infer<typeof toolsScrapeSchema>;
+export type TestProxyInput = z.infer<typeof testProxySchema>;
+export type TestProxyOutput = z.output<typeof testProxySchema>;
+export type TypeCheckInput = z.infer<typeof typeCheckSchema>;
+export type BrowserEngineInput = z.infer<typeof browserEngineSchema>;
+export type BrowserSelectorTypeInput = z.infer<
+  typeof browserSelectorTypeSchema
+>;
+export type BrowserTrafficSourceInput = z.infer<
+  typeof browserTrafficSourceSchema
+>;
+export type BrowserClickSelectorInput = z.infer<
+  typeof browserClickSelectorSchema
+>;

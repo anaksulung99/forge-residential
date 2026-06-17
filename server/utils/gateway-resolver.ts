@@ -286,6 +286,11 @@ export type ResolveResult =
   | {
       ok: true;
       url: string;
+      upstream: {
+        host: string;
+        port: number;
+        protocol: ProxyProtocol;
+      };
       poolId: string;
       userId: string;
       proxyId: string;
@@ -333,6 +338,11 @@ export async function resolveUpstream(
   const ok = (c: Candidate): ResolveResult => ({
     ok: true,
     url: buildUpstreamUrl(c),
+    upstream: {
+      host: c.host,
+      port: c.port,
+      protocol: c.protocol,
+    },
     poolId: pool.id,
     userId,
     proxyId: c.id,

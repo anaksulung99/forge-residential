@@ -16,6 +16,7 @@ export const useTools = () => {
     },
   });
   const isCheckingProxies = ref(false);
+  const proxyTestResult = ref<unknown>(null);
 
   const isLoading = ref(false);
 
@@ -37,11 +38,33 @@ export const useTools = () => {
     }
   };
 
+  const testPool = async (opts: TestProxyInput) => {
+    isLoading.value = true;
+    try {
+      const res = await $fetch("/api/tools/test", {
+        method: "POST",
+        body: opts,
+      });
+      if (!res.success) throw new Error(res.message || "Tested failed");
+
+      proxyTestResult.value = res.data ?? null;
+      toast.success("Tested completed");
+      return res.data ?? true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Tested failed");
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     proxies,
     proxyCheckMeta,
+    proxyTestResult,
     isCheckingProxies,
     isLoading,
     scrape,
+    testPool,
   };
 };
