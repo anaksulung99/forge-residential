@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "./database";
 import { fastCheckProxy, deepCheckProxy } from "./proxy-checker";
 import { classifyProxy } from "./proxy-classifier";
@@ -20,6 +21,13 @@ export interface ProcessResult {
   error: string | null;
   category?: string;
   isMobile?: boolean;
+}
+
+function isMissingProxyError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2003" || error.code === "P2025")
+  );
 }
 
 /**
@@ -56,43 +64,60 @@ export async function processProxyCheck(
   const now = new Date();
   const status: "active" | "dead" = check.ok ? "active" : "dead";
 
-  // Catat histori
-  await prisma.proxyCheck.create({
-    data: {
-      proxyId: proxy.id,
-      ok: check.ok,
-      method,
-      latencyMs: check.latencyMs,
-      exitIp: check.exitIp,
-      exitCountry: check.exitCountry,
-      error: check.error,
-    },
-  });
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      const current = await tx.proxy.findFirst({
+        where: { id: proxy.id, deletedAt: null },
+        select: { id: true, failCount: true },
+      });
+      if (!current) return false;
 
-  // Hitung ulang skor dari 20 cek terakhir
-  const recent = await prisma.proxyCheck.findMany({
-    where: { proxyId: proxy.id },
-    orderBy: { checkedAt: "desc" },
-    take: 20,
-    select: { ok: true },
-  });
-  const okCount = recent.filter((c) => c.ok).length;
-  const successRate = recent.length
-    ? Math.round((okCount / recent.length) * 100)
-    : 0;
+      // Catat histori hanya bila proxy parent masih ada.
+      await tx.proxyCheck.create({
+        data: {
+          proxyId: current.id,
+          ok: check.ok,
+          method,
+          latencyMs: check.latencyMs,
+          exitIp: check.exitIp,
+          exitCountry: check.exitCountry,
+          error: check.error,
+        },
+      });
 
-  await prisma.proxy.update({
-    where: { id: proxy.id },
-    data: {
-      status,
-      latencyMs: check.latencyMs,
-      lastCheckedAt: now,
-      ...(check.ok && { lastOkAt: now }),
-      failCount: check.ok ? 0 : proxy.failCount + 1,
-      successRate,
-      uptimeScore: successRate,
-    },
-  });
+      // Hitung ulang skor dari 20 cek terakhir.
+      const recent = await tx.proxyCheck.findMany({
+        where: { proxyId: current.id },
+        orderBy: { checkedAt: "desc" },
+        take: 20,
+        select: { ok: true },
+      });
+      const okCount = recent.filter((c) => c.ok).length;
+      const successRate = recent.length
+        ? Math.round((okCount / recent.length) * 100)
+        : 0;
+
+      const result = await tx.proxy.updateMany({
+        where: { id: current.id, deletedAt: null },
+        data: {
+          status,
+          latencyMs: check.latencyMs,
+          lastCheckedAt: now,
+          ...(check.ok && { lastOkAt: now }),
+          failCount: check.ok ? 0 : current.failCount + 1,
+          successRate,
+          uptimeScore: successRate,
+        },
+      });
+
+      return result.count > 0;
+    });
+
+    if (!updated) return null;
+  } catch (error) {
+    if (isMissingProxyError(error)) return null;
+    throw error;
+  }
 
   // Klasifikasi mobile/residential + routing pool (Fase 3) — best-effort
   let category: string | undefined;

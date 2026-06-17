@@ -481,17 +481,19 @@ onUnmounted(() => {
       </template>
     </UModal>
 
-    <UModal v-model="isLoading" prevent-close :ui="{ wrapper: 'sm:max-w-xs' }">
-      <div class="p-6 flex flex-col items-center justify-center space-y-4">
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"
-        ></div>
-        <p
-          class="text-sm font-medium text-neutral-600 dark:text-neutral-400 animate-pulse"
-        >
-          Sedang memproses data...
-        </p>
-      </div>
+    <UModal v-model:open="isLoading" :dismissible="false" :close="false">
+      <template #content>
+        <div class="p-6 flex flex-col items-center justify-center space-y-4">
+          <div
+            class="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"
+          ></div>
+          <p
+            class="text-sm font-medium text-neutral-600 dark:text-neutral-400 animate-pulse"
+          >
+            Sedang memproses data...
+          </p>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>

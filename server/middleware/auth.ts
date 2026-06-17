@@ -9,6 +9,7 @@ const publicApiPrefixes = [
   "/api/auth/resend-verification",
   "/api/auth/verify-email",
   "/api/_auth/",
+  "/api/_nuxt_icon/",
   "/api/public/",
   "/api/billing/webhook",
 ];

@@ -54,7 +54,7 @@ export async function sendMail(input: MailOptions) {
   const port = Number(config.NodeMailerPort);
   const secure = config.NodeMailerSecure === "true";
   const user = config.NodeMailerAuthUser;
-  const pass = config.NodeMailerAuthPass ?? config.NodeMailerAuthPassword;
+  const pass = config.NodeMailerAuthPassword ?? config.NodeMailerAuthPass;
   const from = config.NodeMailerFrom;
 
   if (!host || !port || !user || !pass) {

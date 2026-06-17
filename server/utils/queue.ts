@@ -136,11 +136,12 @@ export async function enqueueProxyChecks(
   method: CheckMethod = "fast",
 ) {
   if (proxyIds.length === 0) return;
+  const uniqueProxyIds = [...new Set(proxyIds)];
   const q = getProxyCheckQueue();
   // Hapus job lama dgn jobId sama (termasuk completed/failed tertahan).
-  await Promise.allSettled(proxyIds.map((id) => q.remove(`check-${id}`)));
+  await Promise.allSettled(uniqueProxyIds.map((id) => q.remove(`check-${id}`)));
   await q.addBulk(
-    proxyIds.map((proxyId) => ({
+    uniqueProxyIds.map((proxyId) => ({
       name: "check",
       data: { proxyId, method },
       opts: { jobId: `check-${proxyId}` },

@@ -754,13 +754,13 @@ export const cleanUpProxiesHandler = async (event: H3Event) => {
       });
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.proxy.deleteMany({
-        where: {
-          status: "dead",
-          userId: currentUser.id,
-        },
-      });
+    await prisma.proxy.updateMany({
+      where: {
+        status: "dead",
+        userId: currentUser.id,
+        deletedAt: null,
+      },
+      data: { deletedAt: new Date() },
     });
 
     return { success: true, message: "Proxies cleaned up successfully" };

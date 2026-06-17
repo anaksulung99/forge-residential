@@ -42,7 +42,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     {
       label: user.value?.name ?? "User",
       avatar: {
-        src: user.value?.avatarUrl ?? "/images/no-avatar.jpg",
+        src: user.value?.avatarUrl || undefined,
         alt: user.value?.name ?? "User",
         size: "xs",
         color: "primary",
