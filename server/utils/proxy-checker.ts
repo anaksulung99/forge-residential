@@ -152,7 +152,10 @@ export async function deepCheckProxy(
   timeoutMs = 25_000,
 ): Promise<FastCheckResult> {
   ensurePlaywrightBrowsersPath();
-  const { chromium } = await import("playwright");
+  // specifier non-literal → Nitro/nft TIDAK men-trace playwright ke build web
+  // (playwright hanya benar2 dipakai worker via tsx). Resolve runtime dari node_modules.
+  const pwName = "playwright";
+  const { chromium } = (await import(pwName)) as typeof import("playwright");
   const server =
     proxy.protocol === "socks5"
       ? `socks5://${proxy.host}:${proxy.port}`

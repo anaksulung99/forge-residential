@@ -135,7 +135,9 @@ async function scrapeTableSite(url: string): Promise<ScrapedProxy[]> {
 // ── spys.one (Playwright — port dirender via JS) ──────────────────────
 async function scrapeSpysOne(): Promise<ScrapedProxy[]> {
   ensurePlaywrightBrowsersPath();
-  const { chromium } = await import("playwright");
+  // specifier non-literal → playwright tak ikut ter-bundle ke build web (worker-only)
+  const pwName = "playwright";
+  const { chromium } = (await import(pwName)) as typeof import("playwright");
   const browser = await chromium.launch({ headless: true });
   try {
     const page = await browser.newPage({ userAgent: UA });
