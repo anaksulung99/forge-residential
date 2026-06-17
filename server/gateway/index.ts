@@ -34,8 +34,14 @@ const server = new Server({
     username,
     password,
     hostname,
+    port,
+    isHttp,
   }) => {
-    const res = await resolveUpstream(username || "", password || "");
+    const res = await resolveUpstream(username || "", password || "", {
+      host: hostname,
+      port,
+      isHttp,
+    });
     if (!res.ok) {
       return {
         requestAuthentication: true,

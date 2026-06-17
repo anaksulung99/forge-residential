@@ -176,6 +176,12 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+export interface ProbeTarget {
+  host: string;
+  port: number;
+  isHttp: boolean; // true = plain HTTP (forward), false = HTTPS (CONNECT)
+}
+
 /** Probe TCP cepat: apakah host:port menerima koneksi? */
 function tcpProbe(host: string, port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -195,19 +201,73 @@ function tcpProbe(host: string, port: number): Promise<boolean> {
 }
 
 /**
+ * Probe CONNECT asli ke upstream HTTP/HTTPS: kirim `CONNECT host:port` &
+ * cek balasan 200. Memvalidasi kemampuan tunnel (hindari 590 NON_200 dari
+ * proxy yang TCP-nya hidup tapi tak mendukung CONNECT).
+ */
+function connectProbe(c: Candidate, target: ProbeTarget): Promise<boolean> {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      sock.destroy();
+      resolve(ok);
+    };
+    const sock = net.connect({ host: c.host, port: c.port });
+    sock.setTimeout(PROBE_TIMEOUT_MS);
+    sock.once("connect", () => {
+      let req =
+        `CONNECT ${target.host}:${target.port} HTTP/1.1\r\n` +
+        `Host: ${target.host}:${target.port}\r\n`;
+      if (c.username != null) {
+        const auth = Buffer.from(
+          `${c.username}:${c.password ?? ""}`,
+        ).toString("base64");
+        req += `Proxy-Authorization: Basic ${auth}\r\n`;
+      }
+      req += "\r\n";
+      sock.write(req);
+    });
+    let buf = "";
+    sock.on("data", (d) => {
+      buf += d.toString("latin1");
+      const idx = buf.indexOf("\r\n");
+      if (idx !== -1) {
+        const firstLine = buf.slice(0, idx);
+        finish(/\s2\d\d\s/.test(` ${firstLine} `));
+      }
+    });
+    sock.once("timeout", () => finish(false));
+    sock.once("error", () => finish(false));
+  });
+}
+
+/** Pilih metode probe sesuai protokol upstream & jenis target. */
+function probeUpstream(c: Candidate, target?: ProbeTarget): Promise<boolean> {
+  // SOCKS5 / plain-HTTP / tanpa target → cukup cek TCP.
+  // HTTPS (CONNECT) via upstream http/https → CONNECT probe.
+  if (!target || target.isHttp || c.protocol === "socks5") {
+    return tcpProbe(c.host, c.port);
+  }
+  return connectProbe(c, target);
+}
+
+/**
  * Probe beberapa kandidat paralel; kembalikan yang PERTAMA lolos (cepat).
  * Kandidat yang gagal probe → markProxyFailure (prune lebih cepat).
  */
 function probeSelect(
   cands: Candidate[],
   userId: string,
+  target?: ProbeTarget,
 ): Promise<Candidate | null> {
   if (cands.length === 0) return Promise.resolve(null);
   return new Promise((resolve) => {
     let pending = cands.length;
     let resolved = false;
     for (const c of cands) {
-      tcpProbe(c.host, c.port).then((ok) => {
+      probeUpstream(c, target).then((ok) => {
         if (ok) {
           if (!resolved) {
             resolved = true;
@@ -238,6 +298,7 @@ export type ResolveResult =
 export async function resolveUpstream(
   username: string,
   password: string,
+  target?: ProbeTarget,
 ): Promise<ResolveResult> {
   const creds = parseGatewayUsername(username || "");
   if (!creds.base) return { ok: false, message: "Missing credentials" };
@@ -282,7 +343,7 @@ export async function resolveUpstream(
     const prevId = await cacheGetJSON<string>(stickyKey);
     const prev = prevId ? candidates.find((c) => c.id === prevId) : null;
     if (prev) {
-      if (await tcpProbe(prev.host, prev.port)) {
+      if (await probeUpstream(prev, target)) {
         await cacheSetJSON(stickyKey, prev.id, ttl); // refresh TTL
         return ok(prev);
       }
@@ -293,7 +354,11 @@ export async function resolveUpstream(
 
   // Failover: probe N kandidat acak paralel, pakai yang pertama lolos
   const attempts = Math.min(FAILOVER_ATTEMPTS, candidates.length);
-  const chosen = await probeSelect(shuffle(candidates).slice(0, attempts), userId);
+  const chosen = await probeSelect(
+    shuffle(candidates).slice(0, attempts),
+    userId,
+    target,
+  );
   if (!chosen)
     return { ok: false, message: "No reachable upstream (semua probe gagal)" };
 

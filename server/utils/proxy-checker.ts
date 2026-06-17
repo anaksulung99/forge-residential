@@ -1,18 +1,27 @@
-import http from "node:http";
+import https from "node:https";
 import fs from "node:fs";
 import path from "node:path";
-import { HttpProxyAgent } from "http-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { SocksProxyAgent } from "socks-proxy-agent";
 import type { ProxyProtocol } from "@prisma/client";
 
 // =====================================================================
-// Proxy fast-checker (Fase 1 re-check + fondasi worker Fase 2)
-// Request ringan ke judge endpoint lewat proxy untuk ukur liveness,
-// latency, dan exit IP/country. Tanpa Playwright (itu deep-check Fase 2).
+// Proxy fast-checker — request HTTPS lewat proxy ke judge.
+// Pakai HTTPS (bukan HTTP) supaya HANYA proxy yang benar-benar bisa
+// HTTPS CONNECT yang lolos → status 'active' = CONNECT-capable (kualitas
+// pool naik, gateway jarang kena 590). Judge: Cloudflare trace (ringan,
+// ada ip= & loc=, tanpa rate-limit). Cert ditolerir (rejectUnauthorized
+// false) agar konsisten dgn client yang pakai ignoreHTTPSErrors.
 // =====================================================================
 
-const JUDGE_URL = "http://ip-api.com/json/?fields=status,query,countryCode";
+const JUDGE_URL = "https://www.cloudflare.com/cdn-cgi/trace";
 const DEFAULT_TIMEOUT_MS = 12_000;
+
+function parseTrace(text: string): { ip: string | null; loc: string | null } {
+  const ip = text.match(/^ip=(.+)$/m)?.[1]?.trim() ?? null;
+  const loc = text.match(/^loc=(.+)$/m)?.[1]?.trim() ?? null;
+  return { ip, loc };
+}
 
 export interface FastCheckResult {
   ok: boolean;
@@ -47,7 +56,7 @@ export async function fastCheckProxy(
   const agent =
     proxy.protocol === "socks5"
       ? new SocksProxyAgent(proxyUrl)
-      : new HttpProxyAgent(proxyUrl);
+      : new HttpsProxyAgent(proxyUrl);
 
   const startedAt = Date.now();
 
@@ -59,28 +68,32 @@ export async function fastCheckProxy(
       resolve(r);
     };
 
-    const req = http.get(JUDGE_URL, { agent, timeout: timeoutMs }, (res) => {
-      const chunks: Buffer[] = [];
-      res.on("data", (c) => chunks.push(c as Buffer));
-      res.on("end", () => {
-        const latencyMs = Date.now() - startedAt;
-        if (!res.statusCode || res.statusCode >= 400) {
-          return finish({
-            ok: false,
-            latencyMs,
-            exitIp: null,
-            exitCountry: null,
-            error: `HTTP ${res.statusCode ?? "?"}`,
-          });
-        }
-        try {
-          const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-          if (body?.status === "success" && body?.query) {
+    const req = https.get(
+      JUDGE_URL,
+      { agent, timeout: timeoutMs, rejectUnauthorized: false },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c) => chunks.push(c as Buffer));
+        res.on("end", () => {
+          const latencyMs = Date.now() - startedAt;
+          if (!res.statusCode || res.statusCode >= 400) {
+            return finish({
+              ok: false,
+              latencyMs,
+              exitIp: null,
+              exitCountry: null,
+              error: `HTTP ${res.statusCode ?? "?"}`,
+            });
+          }
+          const { ip, loc } = parseTrace(
+            Buffer.concat(chunks).toString("utf8"),
+          );
+          if (ip) {
             return finish({
               ok: true,
               latencyMs,
-              exitIp: body.query,
-              exitCountry: body.countryCode ?? null,
+              exitIp: ip,
+              exitCountry: loc,
               error: null,
             });
           }
@@ -91,17 +104,9 @@ export async function fastCheckProxy(
             exitCountry: null,
             error: "Judge response tidak valid",
           });
-        } catch {
-          return finish({
-            ok: false,
-            latencyMs,
-            exitIp: null,
-            exitCountry: null,
-            error: "Gagal parse judge response",
-          });
-        }
-      });
-    });
+        });
+      },
+    );
 
     req.on("timeout", () => {
       req.destroy();
@@ -114,13 +119,13 @@ export async function fastCheckProxy(
       });
     });
 
-    req.on("error", (err) => {
+    req.on("error", (err: NodeJS.ErrnoException) => {
       finish({
         ok: false,
         latencyMs: null,
         exitIp: null,
         exitCountry: null,
-        error: err instanceof Error ? err.message : "Request error",
+        error: err?.message || err?.code || "Request error",
       });
     });
   });
@@ -159,37 +164,72 @@ export async function deepCheckProxy(
   try {
     browser = await chromium.launch({
       headless: true,
+      args: [
+        "--no-sandbox", // wajib saat jalan sebagai root (server)
+        "--disable-setuid-sandbox",
+        "--ignore-certificate-errors", // proxy publik sering MITM/cert invalid
+        "--disable-blink-features=AutomationControlled", // stealth ringan
+      ],
       proxy: {
         server,
         ...(proxy.username ? { username: proxy.username } : {}),
         ...(proxy.password ? { password: proxy.password } : {}),
       },
     });
-    const page = await browser.newPage();
-    const res = await page.goto("https://ipinfo.io/json", {
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      viewport: { width: 1366, height: 768 },
+      locale: "en-US",
+    });
+    // Percepat: blokir resource berat (gambar/font/css/media)
+    await context.route("**/*", (route) => {
+      const t = route.request().resourceType();
+      if (t === "image" || t === "media" || t === "font" || t === "stylesheet") {
+        return route.abort();
+      }
+      return route.continue();
+    });
+
+    const page = await context.newPage();
+    const res = await page.goto("https://www.cloudflare.com/cdn-cgi/trace", {
       timeout: timeoutMs,
       waitUntil: "domcontentloaded",
     });
     const latencyMs = Date.now() - startedAt;
 
-    if (!res || !res.ok()) {
+    if (!res) {
       return {
         ok: false,
         latencyMs,
         exitIp: null,
         exitCountry: null,
-        error: `HTTP ${res?.status() ?? "?"}`,
+        error: "No response",
+      };
+    }
+    if (res.status() >= 400) {
+      return {
+        ok: false,
+        latencyMs,
+        exitIp: null,
+        exitCountry: null,
+        error: `HTTP ${res.status()}`,
       };
     }
 
-    const body = await res.json().catch(() => null);
-    return {
-      ok: true,
-      latencyMs,
-      exitIp: body?.ip ?? null,
-      exitCountry: body?.country ?? null,
-      error: null,
-    };
+    const { ip, loc } = parseTrace(await res.text().catch(() => ""));
+    if (!ip) {
+      // Tidak ada IP → kemungkinan halaman challenge/blokir
+      return {
+        ok: false,
+        latencyMs,
+        exitIp: null,
+        exitCountry: null,
+        error: "Blocked / no exit IP",
+      };
+    }
+    return { ok: true, latencyMs, exitIp: ip, exitCountry: loc, error: null };
   } catch (err) {
     return {
       ok: false,
