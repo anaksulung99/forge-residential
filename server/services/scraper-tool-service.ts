@@ -2,7 +2,6 @@
 import * as cheerio from "cheerio";
 import fs from "node:fs";
 import path from "node:path";
-import { PlaywrightCrawler } from "crawlee";
 import { createContext, runInContext } from "node:vm";
 import { ensurePlaywrightBrowsersPath } from "~~/server/utils/proxy-checker";
 
@@ -479,6 +478,7 @@ export class ProxyScraperToolService {
     const out: ScrapedProxy[] = [];
 
     try {
+      const { PlaywrightCrawler } = await import("crawlee");
       const executablePath = this.getPlaywrightBrowserPath();
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
@@ -591,6 +591,7 @@ export class ProxyScraperToolService {
     const out: ScrapedProxy[] = [];
 
     try {
+      const { PlaywrightCrawler } = await import("crawlee");
       const executablePath = this.getPlaywrightBrowserPath();
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;

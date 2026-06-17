@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node --max-old-space-size=8192 ./node_modules/nuxt/bin/nuxt.mjs build",
+    "build": "node --max-old-space-size=8192 ./node_modules/nuxt/bin/nuxt.mjs build && node ./scripts/copy-playwright-deps.mjs",
     "dev": "nuxt dev",
     "worker": "tsx watch server/jobs/proxy-check.worker.ts",
     "worker:prod": "tsx server/jobs/proxy-check.worker.ts",

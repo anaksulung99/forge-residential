@@ -24,7 +24,7 @@ module.exports = {
         PORT: 3001,
         HOST: "127.0.0.1",
       },
-      max_memory_restart: "700M",
+      max_memory_restart: "1200M",
       time: true,
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       error_file: "/var/log/proxy-web/error.log",
