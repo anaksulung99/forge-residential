@@ -59,7 +59,7 @@ const platformIconItems = [
 </script>
 
 <template>
-  <NuxtImg
+  <img
     v-for="(item, index) in platformIconItems"
     :key="index"
     :src="item.images"

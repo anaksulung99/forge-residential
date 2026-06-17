@@ -66,8 +66,9 @@ const startViewTransition = (event: MouseEvent) => {
       to="/"
       class="relative flex flex-col items-center justify-center gap-2 transition-opacity hover:opacity-80"
     >
-      <nuxt-img
+      <img
         src="/logo.png"
+        alt=""
         class="h-16 w-auto object-fill"
         loading="lazy"
         decoding="auto"

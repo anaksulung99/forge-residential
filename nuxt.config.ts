@@ -6,6 +6,10 @@ const require = createRequire(import.meta.url);
 const isProd = process.env.NODE_ENV === "production";
 const isDev = !isProd;
 const enablePrerender = process.env.NUXT_ENABLE_PRERENDER === "true";
+const enableBuildSourcemap = process.env.NUXT_BUILD_SOURCEMAP === "true";
+const enableNitroMinify = process.env.NUXT_NITRO_MINIFY === "true";
+const enablePublicAssetCompression =
+  process.env.NUXT_COMPRESS_PUBLIC_ASSETS === "true";
 const configuredSiteUrl = process.env.NUXT_PUBLIC_SITE_URL?.trim();
 const isLocalSiteUrl = configuredSiteUrl
   ? /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(
@@ -52,7 +56,7 @@ export default defineNuxtConfig({
   },
   vite: {
     build: {
-      sourcemap: isProd,
+      sourcemap: enableBuildSourcemap,
       cssCodeSplit: true,
       rollupOptions: {
         output: {
@@ -137,12 +141,13 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    compressPublicAssets: isProd
+    sourceMap: enableBuildSourcemap,
+    compressPublicAssets: enablePublicAssetCompression
       ? {
           gzip: true,
           brotli: true,
         }
-      : true,
+      : false,
     experimental: {
       websocket: true,
       wasm: false,
@@ -157,7 +162,7 @@ export default defineNuxtConfig({
           },
         }
       : {}),
-    minify: isProd,
+    minify: enableNitroMinify,
     ...(isDev && {
       devHandlers: [],
       devProxy: {

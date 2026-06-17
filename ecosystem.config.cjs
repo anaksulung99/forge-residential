@@ -14,7 +14,7 @@ module.exports = {
       // Web + API (hasil `pnpm build` → .output/server/index.mjs)
       // fork mode + instances:1 — WAJIB untuk WebSocket (cluster memecah koneksi WS).
       name: "proxy-web",
-      script: ".output/server/index.mjs",
+      script: "build/server/index.mjs",
       exec_mode: "fork",
       instances: 1,
       env: {
@@ -26,6 +26,10 @@ module.exports = {
       },
       max_memory_restart: "700M",
       time: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "/var/log/proxy-web/error.log",
+      out_file: "/var/log/proxy-web/output.log",
+      pid_file: "/tmp/proxy-web.pid",
     },
     {
       // Worker BullMQ: check + scrape + classify
@@ -41,6 +45,10 @@ module.exports = {
       },
       max_memory_restart: "800M",
       time: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "/var/log/proxy-worker/error.log",
+      out_file: "/var/log/proxy-worker/output.log",
+      pid_file: "/tmp/proxy-worker.pid",
     },
     {
       // Rotating gateway (proxy-chain) — forward proxy untuk client.
@@ -58,6 +66,10 @@ module.exports = {
       },
       max_memory_restart: "500M",
       time: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      error_file: "/var/log/proxy-gateway/error.log",
+      out_file: "/var/log/proxy-gateway/output.log",
+      pid_file: "/tmp/proxy-gateway.pid",
     },
   ],
 };

@@ -7,6 +7,6 @@ export default defineNitroPlugin((nitroApp) => {
     const method = event?.method ?? "unknown";
     const message = (error as any)?.message ?? String(error);
 
-    console.error(`[Nitro] ${status} ${method} ${path}: ${message}`);
+    // console.error(`[Nitro] ${status} ${method} ${path}: ${message}`);
   });
 });

@@ -84,7 +84,7 @@ const handleChangeLocale = async (newLocale: "en" | "id") => {
         <div class="flex h-16 items-center justify-between">
           <!-- Logo -->
           <NuxtLink :to="localePath('/')" class="flex items-center group">
-            <NuxtImg
+            <img
               src="/logo.png"
               alt="Smart Boost Labs"
               class="h-14 md:h-12 w-auto object-cover"
@@ -276,7 +276,7 @@ const handleChangeLocale = async (newLocale: "en" | "id") => {
               :to="localePath('/')"
               class="flex items-center gap-1 mb-4"
             >
-              <NuxtImg
+              <img
                 src="/logo.png"
                 alt="Smart Boost Labs"
                 class="h-12 w-auto object-cover"

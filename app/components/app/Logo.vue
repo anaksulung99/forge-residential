@@ -9,7 +9,7 @@ const config = useRuntimeConfig();
   <div
     class="flex items-center justify-center gap-2 px-2 transition-all duration-300"
   >
-    <nuxt-img
+    <img
       src="/logo.png"
       alt="App Logo"
       :class="cn('h-8 w-auto', collapsed ? 'hidden' : '')"

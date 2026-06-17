@@ -349,7 +349,7 @@ onUnmounted(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(proxy, index) in proxies" :key="index">
+            <tr v-for="(proxy, index) in proxies.slice(0, 200)" :key="index">
               <td class="text-left p-2">{{ index + 1 }}</td>
               <td class="text-left p-2">{{ proxy.host }}</td>
               <td class="text-left p-2">{{ proxy.port }}</td>
