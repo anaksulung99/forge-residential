@@ -38,6 +38,9 @@ interface ProxyTesterResult {
   simulation?: BrowserSimulateResult;
 }
 
+const PLAYWRIGHT_TEST_MAX_MS = 120_000;
+const PLAYWRIGHT_TEST_MAX_DWELL_SECONDS = 20;
+
 export class ProxyTesterService {
   private fingerprintGenerator: FingerprintGenerator;
   private fingerprintInjector: FingerprintInjector;
@@ -50,6 +53,41 @@ export class ProxyTesterService {
     this.userId = userId;
     this.fingerprintGenerator = new FingerprintGenerator();
     this.fingerprintInjector = new FingerprintInjector();
+  }
+
+  private withTimeout<T>(
+    label: string,
+    timeoutMs: number,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error(`${label} timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      factory()
+        .then(resolve)
+        .catch(reject)
+        .finally(() => clearTimeout(timer));
+    });
+  }
+
+  private getTesterBehaviourConfig(
+    cfg: BrowserBehaviourConfig,
+  ): BrowserBehaviourConfig {
+    return {
+      ...cfg,
+      minDwellSeconds: Math.min(
+        cfg.minDwellSeconds,
+        PLAYWRIGHT_TEST_MAX_DWELL_SECONDS,
+      ),
+      maxDwellSeconds: Math.min(
+        cfg.maxDwellSeconds,
+        PLAYWRIGHT_TEST_MAX_DWELL_SECONDS,
+      ),
+      maxInternalClicks: Math.min(cfg.maxInternalClicks, 1),
+      maxScrollCount: Math.min(cfg.maxScrollCount, 5),
+    };
   }
 
   async processRequest(): Promise<ProxyTesterResult> {
@@ -76,7 +114,10 @@ export class ProxyTesterService {
       ipChecks.push(await this.requestViaProxy(url, proxy.url));
     }
 
-    const target = await this.requestViaProxy(this.options.targetUrl, proxy.url);
+    const target = await this.requestViaProxy(
+      this.options.targetUrl,
+      proxy.url,
+    );
 
     return {
       proxy: {
@@ -123,19 +164,44 @@ export class ProxyTesterService {
 
     let sessionBrowser: SessionBrowser | null = null;
 
-    const behaviourConfig = getBehaviourProfile(this.options.behaviour);
+    const behaviourConfig = this.getTesterBehaviourConfig(
+      getBehaviourProfile(this.options.behaviour),
+    );
 
     try {
-      sessionBrowser = await this.launchBrowser(proxyPool, sessionId);
+      sessionBrowser = await this.withTimeout(
+        "launch browser",
+        Math.min((this.options.launchTimeout ?? 30_000) + 10_000, 70_000),
+        () => this.launchBrowser(proxyPool, sessionId),
+      );
+      console.log("[proxy-tester] browser launched", {
+        proxy: proxy.username,
+      });
+      const browserSession = sessionBrowser;
 
-      const page = await sessionBrowser.context.newPage();
-      const ipChecks = await this.runBrowserIpChecks(page);
+      const page = await this.withTimeout("open browser page", 10_000, () =>
+        browserSession.context.newPage(),
+      );
+      console.log("[proxy-tester] browser page opened");
 
-      const simResult = await this.simulateBehaviour(
-        page,
-        this.options.targetUrl,
-        behaviourConfig,
-        referrer ?? undefined,
+      const ipChecks = await this.withTimeout(
+        "browser IP checks",
+        Math.min((this.options.navigationTimeout ?? 60_000) * 2 + 5_000, 90_000),
+        () => this.runBrowserIpChecks(page),
+      );
+      console.log("[proxy-tester] browser IP checks done", ipChecks);
+      this.assertBrowserProxyUsable(ipChecks);
+
+      const simResult = await this.withTimeout(
+        "simulate browser behaviour",
+        PLAYWRIGHT_TEST_MAX_MS,
+        () =>
+          this.simulateBehaviour(
+            page,
+            this.options.targetUrl,
+            behaviourConfig,
+            referrer ?? undefined,
+          ),
       );
 
       console.log("Simulated behaviour", simResult);
@@ -158,7 +224,14 @@ export class ProxyTesterService {
       console.error("Error launching browser", error);
       throw error;
     } finally {
-      await sessionBrowser?.close().catch(() => {});
+      if (sessionBrowser) {
+        const browserSession = sessionBrowser;
+        await this.withTimeout("close browser", 10_000, () =>
+          browserSession.close(),
+        ).catch((error) => {
+          console.warn("[proxy-tester] close browser timeout/error", error);
+        });
+      }
     }
   }
 
@@ -206,6 +279,12 @@ export class ProxyTesterService {
 
     const proxy = this.buildGatewayProxy(proxyPool, gatewaySessionId);
 
+    console.log("[proxy-tester] launching playwright", {
+      engine: this.options.engine,
+      headless: this.options.headless ?? true,
+      proxy: proxy.username,
+    });
+
     const browser = await launcher.launch({
       headless: this.options.headless ?? true,
       timeout: this.options.launchTimeout ?? 30_000,
@@ -224,6 +303,7 @@ export class ProxyTesterService {
           ? this.getBrowserArgs(this.options.engine)
           : [],
     });
+    console.log("[proxy-tester] playwright launched");
 
     const extraHTTPHeaders: Record<string, string> = {
       "Accept-Language":
@@ -258,27 +338,21 @@ export class ProxyTesterService {
       extraHTTPHeaders,
       // proxy free sering MITM/cert invalid → wajib agar tidak ERR_CERT_*
       ignoreHTTPSErrors: true,
-      ...(proxy
-        ? {
-            proxy: {
-              server: proxy.server as string,
-              username: proxy.username,
-              password: proxy.password,
-              bypass: proxy.bypass,
-            },
-          }
-        : {}),
     });
+    console.log("[proxy-tester] browser context created");
 
     await this.fingerprintInjector
       .attachFingerprintToPlaywright(context, fingerprint)
       .catch(() => {});
+    console.log("[proxy-tester] fingerprint attached");
 
     await context.addInitScript(
       this.getClientHintsScript(hint, this.options.engine),
     );
+    console.log("[proxy-tester] init script attached");
 
     const page = await context.newPage();
+    console.log("[proxy-tester] initial page opened");
 
     if (this.options.navigationTimeout) {
       context.setDefaultNavigationTimeout(this.options.navigationTimeout);
@@ -380,10 +454,10 @@ export class ProxyTesterService {
 
       // Override languages
       try { Object.defineProperty(navigator, 'languages', { get: () => ['${hint.locale ?? hint.language ?? "en-US"}', 'en'], configurable: true }); } catch(e) {}
-      
+
       // Override hardware concurrency
       try { Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8, configurable: true }); } catch(e) {}
-      
+
       // Override device memory
       try { Object.defineProperty(navigator, 'deviceMemory', { get: () => 8, configurable: true }); } catch(e) {}
 
@@ -395,7 +469,7 @@ export class ProxyTesterService {
         Object.defineProperty(window, 'mozRTCPeerConnection', { get: () => undefined, configurable: true });
         Object.defineProperty(navigator, 'mediaDevices', { get: () => undefined, configurable: true });
       } catch(e) {}
-      
+
       // Override WebGL vendor
       try {
         if (typeof WebGLRenderingContext !== 'undefined') {
@@ -812,18 +886,24 @@ export class ProxyTesterService {
   // ============================================================
   private async runBrowserIpChecks(page: Page): Promise<ProxyIpCheck[]> {
     const checks: ProxyIpCheck[] = [];
-    const urls = ["https://httpbin.org/ip", "https://api.ipify.org?format=json"];
+    const urls = [
+      "https://httpbin.org/ip",
+      "https://api.ipify.org?format=json",
+    ];
 
     for (const url of urls) {
+      const checkPage = await page.context().newPage();
       try {
-        const response = await page.goto(url, {
+        const response = await checkPage.goto(url, {
           waitUntil: "domcontentloaded",
           timeout: this.options.navigationTimeout ?? 60_000,
         });
         checks.push({
           url,
           status: response?.status() ?? null,
-          body: (await page.textContent("body").catch(() => null))?.trim() ?? null,
+          body:
+            (await checkPage.textContent("body").catch(() => null))?.trim() ??
+            null,
         });
       } catch (error) {
         checks.push({
@@ -831,13 +911,37 @@ export class ProxyTesterService {
           status: null,
           body: error instanceof Error ? error.message : "IP check failed",
         });
+      } finally {
+        await checkPage.close().catch(() => {});
       }
     }
 
     return checks;
   }
 
-  private requestViaProxy(url: string, proxyUrl: string): Promise<ProxyIpCheck> {
+  private assertBrowserProxyUsable(ipChecks: ProxyIpCheck[]): void {
+    const hasSuccessfulCheck = ipChecks.some(
+      (check) => check.status != null && check.status >= 200 && check.status < 400,
+    );
+
+    if (hasSuccessfulCheck) return;
+
+    const reasons = ipChecks
+      .map((check) => {
+        const body = check.body ? check.body.split("\n")[0] : "empty response";
+        return `${check.url}: ${check.status ?? "no-status"} ${body}`;
+      })
+      .join(" | ");
+
+    throw new Error(
+      `Browser proxy tunnel failed before opening target. ${reasons}`,
+    );
+  }
+
+  private requestViaProxy(
+    url: string,
+    proxyUrl: string,
+  ): Promise<ProxyIpCheck> {
     return new Promise((resolve) => {
       let target: URL;
       try {
@@ -949,20 +1053,31 @@ export class ProxyTesterService {
     return url;
   }
 
-  private buildGatewayProxy(proxy: ProxyPool): BuiltGatewayProxy {
+  private buildGatewayProxy(
+    proxy: ProxyPool,
+    sessionId?: string,
+  ): BuiltGatewayProxy {
     const serverUrl = this.normalizeGatewayHost();
     const authUrl = new URL(serverUrl.toString());
+    const username = sessionId
+      ? `${proxy.gatewayUsername}-session-${sessionId}`
+      : proxy.gatewayUsername;
 
-    authUrl.username = proxy.gatewayUsername;
+    authUrl.username = username;
     authUrl.password = proxy.gatewayPassword;
 
     return {
       server: serverUrl.origin,
-      username: proxy.gatewayUsername,
+      username,
       password: proxy.gatewayPassword,
       bypass: "<-loopback>",
       url: authUrl.toString(),
     };
+  }
+
+  private createGatewaySessionId(prefix: string): string {
+    const randomPart = Math.random().toString(36).slice(2, 10);
+    return `${prefix}${Date.now().toString(36)}${randomPart}`;
   }
 
   private normalizeProxy(proxy?: ProxyPool) {

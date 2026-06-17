@@ -1,4 +1,5 @@
 import net from "node:net";
+import tls from "node:tls";
 import type { ProxyProtocol } from "@prisma/client";
 import { prisma } from "./database";
 import { cacheGetJSON, cacheSetJSON } from "./queue";
@@ -6,6 +7,14 @@ import { markProxyFailure } from "./proxy-health";
 
 const FAILOVER_ATTEMPTS = Number(process.env.GATEWAY_FAILOVER_ATTEMPTS || 5);
 const PROBE_TIMEOUT_MS = Number(process.env.GATEWAY_PROBE_TIMEOUT_MS || 1500);
+const DEEP_PROBE_TIMEOUT_MS = Number(
+  process.env.GATEWAY_DEEP_PROBE_TIMEOUT_MS || 6000,
+);
+const DEEP_PROBE_CACHE_SEC = Number(
+  process.env.GATEWAY_DEEP_PROBE_CACHE_SEC || 120,
+);
+const ENABLE_DEEP_HTTPS_PROBE =
+  process.env.GATEWAY_DEEP_HTTPS_PROBE !== "false";
 
 // =====================================================================
 // Gateway resolver (Fase 5)
@@ -243,13 +252,114 @@ function connectProbe(c: Candidate, target: ProbeTarget): Promise<boolean> {
   });
 }
 
+function parseHttpStatus(head: string): number | null {
+  const firstLine = head.slice(0, head.indexOf("\r\n"));
+  const match = /^HTTP\/\d(?:\.\d)?\s+(\d{3})\b/i.exec(firstLine);
+  return match ? Number(match[1]) : null;
+}
+
+function deepHttpsProbe(c: Candidate, target: ProbeTarget): Promise<boolean> {
+  if (c.protocol === "socks5") return tcpProbe(c.host, c.port);
+
+  return new Promise((resolve) => {
+    let done = false;
+    let sock: net.Socket | null = null;
+    let tlsSock: tls.TLSSocket | null = null;
+    let timer: NodeJS.Timeout | null = null;
+
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      tlsSock?.destroy();
+      sock?.destroy();
+      resolve(ok);
+    };
+
+    timer = setTimeout(() => finish(false), DEEP_PROBE_TIMEOUT_MS);
+    sock = net.connect({ host: c.host, port: c.port });
+    sock.once("connect", () => {
+      let req =
+        `CONNECT ${target.host}:${target.port} HTTP/1.1\r\n` +
+        `Host: ${target.host}:${target.port}\r\n`;
+      if (c.username != null) {
+        const auth = Buffer.from(
+          `${c.username}:${c.password ?? ""}`,
+        ).toString("base64");
+        req += `Proxy-Authorization: Basic ${auth}\r\n`;
+      }
+      req += "\r\n";
+      sock?.write(req);
+    });
+
+    let connectBuf = "";
+    sock.on("data", (d) => {
+      connectBuf += d.toString("latin1");
+      const headerEnd = connectBuf.indexOf("\r\n\r\n");
+      if (headerEnd === -1) return;
+
+      const status = parseHttpStatus(connectBuf.slice(0, headerEnd + 2));
+      if (status == null || status < 200 || status >= 300 || !sock) {
+        finish(false);
+        return;
+      }
+
+      sock.removeAllListeners("data");
+      tlsSock = tls.connect({
+        socket: sock,
+        servername: target.host,
+        rejectUnauthorized: false,
+      });
+
+      tlsSock.once("secureConnect", () => {
+        tlsSock?.write(
+          `GET / HTTP/1.1\r\n` +
+            `Host: ${target.host}\r\n` +
+            "User-Agent: Mozilla/5.0\r\n" +
+            "Accept: */*\r\n" +
+            "Connection: close\r\n\r\n",
+        );
+      });
+
+      let responseBuf = "";
+      tlsSock.on("data", (chunk) => {
+        responseBuf += chunk.toString("latin1");
+        const idx = responseBuf.indexOf("\r\n");
+        if (idx === -1) return;
+        const statusCode = parseHttpStatus(responseBuf.slice(0, idx + 2));
+        finish(statusCode != null && statusCode >= 200 && statusCode < 500);
+      });
+      tlsSock.once("error", () => finish(false));
+      tlsSock.once("timeout", () => finish(false));
+      tlsSock.setTimeout(DEEP_PROBE_TIMEOUT_MS);
+    });
+    sock.once("timeout", () => finish(false));
+    sock.once("error", () => finish(false));
+    sock.setTimeout(DEEP_PROBE_TIMEOUT_MS);
+  });
+}
+
 /** Pilih metode probe sesuai protokol upstream & jenis target. */
-function probeUpstream(c: Candidate, target?: ProbeTarget): Promise<boolean> {
+async function probeUpstream(
+  c: Candidate,
+  target?: ProbeTarget,
+): Promise<boolean> {
   // SOCKS5 / plain-HTTP / tanpa target → cukup cek TCP.
   // HTTPS (CONNECT) via upstream http/https → CONNECT probe.
   if (!target || target.isHttp || c.protocol === "socks5") {
     return tcpProbe(c.host, c.port);
   }
+
+  if (ENABLE_DEEP_HTTPS_PROBE) {
+    const cacheKey = `gw:deep-ok:${c.id}:${target.host}:${target.port}`;
+    const cached = await cacheGetJSON<boolean>(cacheKey);
+    if (cached === true) return true;
+
+    const ok = await deepHttpsProbe(c, target);
+    if (ok) await cacheSetJSON(cacheKey, true, DEEP_PROBE_CACHE_SEC);
+    return ok;
+  }
+
   return connectProbe(c, target);
 }
 
@@ -330,9 +440,10 @@ export async function resolveUpstream(
 
   const userId = pool.userId;
   const ttl = pool.stickyTtlSec ?? 600;
-  const stickyKey =
-    pool.rotationMode === "sticky" && creds.session
-      ? `gw:sticky:${pool.id}:${creds.session}`
+  const stickyKey = creds.session
+    ? `gw:sticky:${pool.id}:${creds.session}`
+    : pool.rotationMode === "sticky"
+      ? `gw:sticky:${pool.id}:${username}`
       : null;
 
   const ok = (c: Candidate): ResolveResult => ({
